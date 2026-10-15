@@ -1,0 +1,50 @@
+---
+import { siteName, artistName, getCurrentExhibition, exhibitionPath } from '@/lib/exhibition';
+
+const exhibition = getCurrentExhibition();
+const home = exhibitionPath(exhibition);
+---
+
+<header class="site-header">
+  <a class="wordmark" href={home} aria-label={`${siteName} home`}>{siteName}<span class="by"> by {artistName}</span></a>
+  <!-- Reserved: exhibition switcher renders here once more than one exhibition exists. -->
+  <p class="exhibition-label">
+    <span class="eyebrow">{exhibition.title}</span>
+  </p>
+</header>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-h);
+    padding: 0 clamp(1rem, 3vw, 2.5rem);
+    background: linear-gradient(to bottom, rgba(244, 240, 232, 0.92), rgba(244, 240, 232, 0));
+    pointer-events: none;
+  }
+  .site-header > * {
+    pointer-events: auto;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 400;
+    font-variation-settings: 'opsz' 48, 'SOFT' 50;
+    letter-spacing: -0.01em;
+    color: var(--charcoal);
+  }
+  .by {
+    font-family: var(--font-text);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--mute);
+    margin-left: 0.35rem;
+  }
+  .exhibition-label {
+    margin: 0;
+  }
+</style>

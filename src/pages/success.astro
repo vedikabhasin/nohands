@@ -1,0 +1,28 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCurrentExhibition, siteTagline, exhibitionPath } from '@/lib/exhibition';
+const exhibition = getCurrentExhibition();
+---
+
+<Base title={`Thank you | ${siteTagline}`} canonical="/success">
+  <section class="status">
+    <p class="eyebrow">Order received</p>
+    <h1>Thank you.</h1>
+    <p class="prose">Your payment went through. A receipt is on its way from Stripe, and the artist will be in touch about delivery.</p>
+    <p><a class="btn" href={exhibitionPath(exhibition)}>Return to the exhibition</a></p>
+  </section>
+</Base>
+
+<style>
+  .status {
+    display: grid;
+    gap: 1.25rem;
+    min-height: 100svh;
+    align-content: center;
+    padding: calc(var(--header-h) + 2rem) clamp(1.25rem, 6vw, 4rem) 4rem;
+    max-width: 44rem;
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+  }
+</style>

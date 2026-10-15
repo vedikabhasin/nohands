@@ -1,0 +1,64 @@
+---
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/inter';
+import '@/styles/global.css';
+import Header from '@/components/Header.astro';
+import { siteTagline } from '@/lib/exhibition';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Path for the canonical URL, e.g. /paintings/rhino. Defaults to the current path. */
+  canonical?: string;
+  bodyClass?: string;
+}
+
+const { title, description, canonical, bodyClass } = Astro.props;
+const canonicalUrl = new URL(canonical ?? Astro.url.pathname, Astro.site ?? Astro.url).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonicalUrl} />
+    <meta name="theme-color" content="#f4f0e8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body class={bodyClass}>
+    <a class="skip visually-hidden" href="#main">Skip to content</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>© {new Date().getFullYear()} {siteTagline}</p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .skip:focus {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    clip: auto;
+    background: var(--charcoal);
+    color: var(--ivory);
+    z-index: 100;
+  }
+  .site-footer {
+    padding: 2rem 1.5rem 2.5rem;
+    font-size: 0.75rem;
+    color: var(--mute);
+    text-align: center;
+  }
+</style>

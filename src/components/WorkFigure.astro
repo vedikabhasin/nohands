@@ -1,0 +1,154 @@
+---
+/**
+ * One painting hung on a wall. The .plane tilts a few degrees toward the pointer (or with device
+ * tilt) and its cast shadow follows; a paper grain overlay makes the image read as an object.
+ * A button wraps the image so tapping it opens the detail panel without leaving the walk.
+ */
+import { Picture } from 'astro:assets';
+import { altText, inches, onWallInches, widthsFor, type Work } from '@/lib/exhibition';
+
+interface Props {
+  work: Work;
+  position: number;
+  /** Share of the wall's total width, used for the sizes attribute. */
+  widthShare: number;
+  eager?: boolean;
+}
+
+const { work, position, widthShare, eager = false } = Astro.props;
+const wall = onWallInches(work);
+const widths = widthsFor(work.image, [480, 720, 960, 1280, 1600, 2000], 2000);
+const vw = Math.max(20, Math.round(widthShare * 100));
+const sizes = `(min-width: 720px) ${vw}vw, 90vw`;
+---
+
+<figure
+  class="work"
+  id={`work-${work.id}`}
+  data-work={work.id}
+  data-index={work.index}
+  style={`--w: ${wall.w.toFixed(2)}; --h: ${wall.h.toFixed(2)}; --i: ${position}; --ratio: ${work.image.width} / ${work.image.height}; --tx: 0; --ty: 0;`}
+>
+  <div class="plane" data-plane>
+    <span class="shadow" aria-hidden="true"></span>
+    <button class="art" type="button" data-open={work.id} aria-haspopup="dialog" aria-label={`Open ${work.title}`}>
+      <Picture
+        src={work.image}
+        widths={widths}
+        sizes={sizes}
+        formats={['avif', 'webp']}
+        fallbackFormat="jpg"
+        quality={82}
+        alt={altText(work)}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchpriority={eager ? 'high' : 'auto'}
+      />
+    </button>
+  </div>
+  <figcaption>
+    <span class="title">{work.title}</span>
+    <span class="meta">{work.medium} · {inches(work.originalSize)}</span>
+    {work.status === 'sold' && <span class="sold">Sold</span>}
+  </figcaption>
+</figure>
+
+<style>
+  .work {
+    --delay: calc(var(--i) * 110ms);
+    flex: 0 0 auto;
+    width: calc(var(--inch) * var(--w));
+    margin: 0;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity var(--dur) var(--ease) var(--delay), transform var(--dur) var(--ease) var(--delay);
+  }
+  :global(.wall.is-visible) .work {
+    opacity: 1;
+    transform: none;
+  }
+
+  .plane {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    transform: perspective(1400px) rotateX(calc(var(--ty) * -3.5deg)) rotateY(calc(var(--tx) * 4.5deg));
+    transform-style: preserve-3d;
+    transition: transform 160ms linear;
+    will-change: transform;
+  }
+  .shadow {
+    position: absolute;
+    inset: 6% 3% -3% 3%;
+    background: rgba(31, 29, 26, 0.42);
+    filter: blur(22px);
+    transform: translate3d(calc(var(--tx) * -14px), calc(var(--ty) * -10px + 10px), -1px);
+    transition: transform 160ms linear;
+    will-change: transform;
+  }
+  .art {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: var(--ivory-low);
+    cursor: zoom-in;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.55),
+      0 1px 2px rgba(31, 29, 26, 0.14);
+  }
+  .art :global(picture),
+  .art :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  /* paper grain: a static noise tile multiplied over the image */
+  .art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.43 0 0 0 0 0.40 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+  }
+
+  figcaption {
+    display: grid;
+    gap: 0.15rem;
+    margin-top: 1.1rem;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .title {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--charcoal);
+    font-variation-settings: 'opsz' 24, 'SOFT' 30;
+  }
+  .sold {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  @media (max-width: 719px) {
+    figcaption {
+      margin-top: 0.75rem;
+      font-size: 0.72rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .plane,
+    .shadow {
+      transform: none;
+      transition: none;
+      will-change: auto;
+    }
+  }
+</style>

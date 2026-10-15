@@ -1,0 +1,228 @@
+---
+/**
+ * One wall of the exhibition as a parallax scene: a soft room (background), the paintings
+ * (midground, the only layer with real detail), an editorial title the painting breaks
+ * through (type layer), and a wall plane that slides across fastest (foreground).
+ * Layers move on `transform` only, driven by the --p scroll progress the walk script sets.
+ * Reduced motion collapses everything to a flat, static hang.
+ */
+import WorkFigure from '@/components/WorkFigure.astro';
+import { onWallInches, type Wall } from '@/lib/exhibition';
+
+interface Props {
+  wall: Wall;
+  total: number;
+}
+
+const { wall, total } = Astro.props;
+const sizes = wall.works.map(onWallInches);
+const gapIn = 7; // inches of wall between works
+const sumW = sizes.reduce((acc, s) => acc + s.w, 0) + gapIn * (sizes.length - 1);
+const maxH = Math.max(...sizes.map((s) => s.h));
+let pairW = 0;
+for (let i = 0; i < sizes.length; i += 2) {
+  const pw = sizes[i].w + (sizes[i + 1] ? sizes[i + 1].w + gapIn : 0);
+  pairW = Math.max(pairW, pw);
+}
+const side = wall.number % 2 === 0 ? 'right' : 'left';
+---
+
+<section
+  class:list={['wall', `wall--plane-${side}`]}
+  id={`wall-${wall.number}`}
+  data-wall={wall.number}
+  aria-label={`Wall ${wall.number} of ${total}: ${wall.title}`}
+  style={`--sum-w: ${sumW.toFixed(2)}; --max-h: ${maxH.toFixed(2)}; --pair-w: ${pairW.toFixed(2)}; --gap-in: ${gapIn}; --p: 0;`}
+>
+  <div class="layer layer-bg" aria-hidden="true">
+    <div class="room">
+      <span class="doorway"></span>
+      <span class="floor"></span>
+    </div>
+  </div>
+
+  <div class="layer layer-type">
+    <h2 class="wall-title" data-fallback={wall.titleIsFallback ? 'true' : undefined}>{wall.title}</h2>
+  </div>
+
+  <div class="layer layer-mid">
+    <div class="hang">
+      {wall.works.map((work, i) => (
+        <WorkFigure work={work} position={i} widthShare={sizes[i].w / sumW} eager={wall.number === 1} />
+      ))}
+    </div>
+  </div>
+
+  <div class="layer layer-fg" aria-hidden="true">
+    <div class="plane"></div>
+  </div>
+</section>
+
+<style>
+  .wall {
+    --plane-w: clamp(2.5rem, 7vw, 7.5rem);
+    --pad-x: calc(2 * var(--plane-w) + 6rem);
+    --pad-y: 15rem;
+    --inch: min(calc((100vw - var(--pad-x)) / var(--sum-w)), calc((100svh - var(--pad-y)) / var(--max-h)));
+    position: relative;
+    display: grid;
+    min-height: 100svh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    isolation: isolate;
+    background: var(--ivory);
+  }
+
+  .layer {
+    grid-area: 1 / 1;
+    will-change: transform;
+    transform: translate3d(0, calc(var(--p) * var(--k)), 0);
+  }
+
+  /* Background: lowest contrast, slowest movement (lags the scroll). */
+  .layer-bg {
+    --k: 9svh;
+    z-index: 0;
+    position: absolute;
+    inset: -12% 0;
+    pointer-events: none;
+  }
+  .room {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 60%),
+      linear-gradient(to bottom, var(--ivory) 0%, var(--ivory) 68%, var(--ivory-deep) 68.2%, var(--ivory-low) 100%);
+  }
+  .floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 68%;
+    height: 1px;
+    background: rgba(31, 29, 26, 0.08);
+  }
+  .doorway {
+    position: absolute;
+    top: 14%;
+    bottom: 32%;
+    width: clamp(4rem, 9vw, 9rem);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
+    box-shadow: inset 1px 0 0 rgba(31, 29, 26, 0.06), inset -1px 0 0 rgba(31, 29, 26, 0.06);
+  }
+  .wall--plane-left .doorway {
+    right: 7%;
+  }
+  .wall--plane-right .doorway {
+    left: 7%;
+  }
+
+  /* Type: one large editorial title the painting sits over. */
+  .layer-type {
+    --k: -5svh;
+    z-index: 1;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .wall-title {
+    position: absolute;
+    top: clamp(5.5rem, 16svh, 11rem);
+    left: calc(var(--plane-w) + clamp(1rem, 3vw, 3rem));
+    max-width: calc(100vw - 2 * var(--plane-w) - 4rem);
+    margin: 0;
+    font-size: clamp(3.4rem, 11vw, 9.5rem);
+    font-weight: 300;
+    font-variation-settings: 'opsz' 144, 'SOFT' 60;
+    line-height: 0.92;
+    letter-spacing: -0.025em;
+    color: var(--charcoal);
+    text-wrap: balance;
+  }
+  .wall--plane-right .wall-title {
+    left: auto;
+    right: calc(var(--plane-w) + clamp(1rem, 3vw, 3rem));
+    text-align: right;
+  }
+
+  /* Midground: the paintings, in flow so the wall grows with them. */
+  .layer-mid {
+    --k: 2svh;
+    z-index: 2;
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 100svh;
+    padding: calc(var(--header-h) + 3rem) calc(var(--plane-w) + 1.5rem) 6rem;
+  }
+  .hang {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem calc(var(--inch) * var(--gap-in));
+    width: 100%;
+  }
+
+  /* Foreground: a wall plane that slides across fastest and occasionally occludes an edge. */
+  .layer-fg {
+    --k: -22svh;
+    z-index: 3;
+    position: absolute;
+    inset: -30% 0;
+    pointer-events: none;
+  }
+  /* The plane also drifts sideways with scroll, so it only creeps over an edge while moving. */
+  .plane {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--plane-w);
+    will-change: transform;
+    transform: translate3d(calc(var(--p) * -5vw), 0, 0);
+    background: linear-gradient(to right, var(--ivory-deep), var(--ivory-low));
+    box-shadow: 14px 0 40px -14px rgba(31, 29, 26, 0.25);
+  }
+  .wall--plane-left .plane {
+    left: 0;
+  }
+  .wall--plane-right .plane {
+    right: 0;
+    transform: translate3d(calc(var(--p) * 5vw), 0, 0);
+    background: linear-gradient(to left, var(--ivory-deep), var(--ivory-low));
+    box-shadow: -14px 0 40px -14px rgba(31, 29, 26, 0.25);
+  }
+
+  @media (max-width: 719px) {
+    .wall {
+      --plane-w: clamp(1.5rem, 6vw, 2.5rem);
+      --pad-x: calc(2 * var(--plane-w) + 1.5rem);
+      --pad-y: 13rem;
+      --inch: min(calc((100vw - var(--pad-x)) / var(--pair-w)), calc((100svh - var(--pad-y)) / var(--max-h)));
+    }
+    .layer-mid {
+      padding: calc(var(--header-h) + 5rem) calc(var(--plane-w) + 0.75rem) 5rem;
+    }
+    .wall-title {
+      top: calc(var(--header-h) + 0.75rem);
+      left: calc(var(--plane-w) + 0.75rem);
+      max-width: calc(100vw - 2 * var(--plane-w) - 1.5rem);
+    }
+    .wall--plane-right .wall-title {
+      right: calc(var(--plane-w) + 0.75rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .layer {
+      transform: none;
+      will-change: auto;
+    }
+    .layer-fg {
+      display: none;
+    }
+    .plane {
+      transform: none;
+    }
+  }
+</style>

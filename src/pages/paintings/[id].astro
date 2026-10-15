@@ -1,0 +1,25 @@
+---
+/**
+ * Direct, indexable page for one painting. Same content as the panel, plus a way into the walk.
+ */
+import Base from '@/layouts/Base.astro';
+import WorkDetail from '@/components/WorkDetail.astro';
+import { getExhibitions, inches, siteTagline, paintingPageTitle, paintingPath, usd, priceFrom } from '@/lib/exhibition';
+
+export function getStaticPaths() {
+  return getExhibitions().flatMap((exhibition) =>
+    exhibition.works.map((work) => ({ params: { id: work.id }, props: { work, exhibition } })),
+  );
+}
+
+const { work, exhibition } = Astro.props;
+const availability =
+  work.status === 'sold'
+    ? `Original sold. Fine art reproductions from ${usd(priceFrom(work))}.`
+    : `Original ${usd(work.originalPrice)}, fine art reproductions from ${usd(priceFrom(work))}.`;
+const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}. ${availability} Part of ${exhibition.title} at ${siteTagline}.`;
+---
+
+<Base title={paintingPageTitle(work)} description={description} canonical={paintingPath(work)}>
+  <WorkDetail work={work} exhibition={exhibition} mode="page" />
+</Base>

@@ -1,0 +1,100 @@
+---
+/**
+ * The gallery walk. One section per wall, every work's detail panel pre-rendered in a <dialog>
+ * so opening a painting never leaves the page or loses scroll position.
+ */
+import Base from '@/layouts/Base.astro';
+import Wall from '@/components/Wall.astro';
+import WorkDetail from '@/components/WorkDetail.astro';
+import { getExhibitions, siteTagline, exhibitionPath, usd, priceFrom } from '@/lib/exhibition';
+
+export function getStaticPaths() {
+  return getExhibitions().map((exhibition) => ({ params: { route: exhibition.route }, props: { exhibition } }));
+}
+
+const { exhibition } = Astro.props;
+const total = exhibition.walls.length;
+const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.length} original paintings on paper, shown as a walk through ${total} walls. Originals and fine art reproductions from ${usd(Math.min(...exhibition.works.map(priceFrom)))}.`;
+---
+
+<Base title={`${exhibition.title} | ${siteTagline}`} description={description} canonical={exhibitionPath(exhibition)} bodyClass="is-walk">
+  <h1 class="visually-hidden">{exhibition.title}</h1>
+
+  <div class="walk" data-walk={exhibition.id}>
+    {exhibition.walls.map((wall) => <Wall wall={wall} total={total} />)}
+  </div>
+
+  <p class="indicator" aria-live="polite">
+    <span class="eyebrow">Wall <span data-wall-current>1</span> of {total}</span>
+  </p>
+
+  {
+    exhibition.works.map((work) => (
+      <dialog class="work-dialog" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={work.title}>
+        <WorkDetail work={work} exhibition={exhibition} mode="panel" />
+      </dialog>
+    ))
+  }
+
+  <script>
+    import { initWalk } from '@/scripts/walk';
+    initWalk();
+  </script>
+</Base>
+
+<style>
+  .walk {
+    scroll-snap-type: y proximity;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .walk {
+      scroll-snap-type: none;
+    }
+  }
+  .indicator {
+    position: fixed;
+    left: clamp(1rem, 3vw, 2.5rem);
+    bottom: 1.25rem;
+    z-index: 10;
+    margin: 0;
+    padding: 0.4rem 0.7rem;
+    background: rgba(244, 240, 232, 0.8);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+  .work-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100svh;
+    max-height: 100svh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--ivory);
+    color: var(--ink);
+    overflow: hidden;
+  }
+  .work-dialog::backdrop {
+    background: rgba(31, 29, 26, 0.5);
+  }
+  @media (max-width: 899px) {
+    .work-dialog {
+      overflow-y: auto;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .work-dialog[open] {
+      animation: dialog-in 320ms var(--ease);
+    }
+    @keyframes dialog-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+</style>

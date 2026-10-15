@@ -1,0 +1,314 @@
+---
+/**
+ * Choose original or reproduction, pick a print size, buy. Every price and link comes from the
+ * data layer. A missing Stripe Payment Link renders a disabled button, never a broken one.
+ */
+import { inches, usd, type Work } from '@/lib/exhibition';
+
+interface Props {
+  work: Work;
+}
+
+const { work } = Astro.props;
+const originalAvailable = work.status === 'available';
+const availablePrints = work.prints.filter((p) => p.available);
+const defaultKind = originalAvailable ? 'original' : 'print';
+const defaultSize = availablePrints[0]?.key ?? 'small';
+const printFrom = availablePrints.length ? Math.min(...availablePrints.map((p) => p.price)) : null;
+
+function withReference(link: string | null, variant: string): string | null {
+  if (!link) return null;
+  const url = new URL(link);
+  url.searchParams.set('client_reference_id', `${work.id}:${variant}`);
+  return url.toString();
+}
+---
+
+<form class="purchase" data-purchase data-work={work.id} data-default-kind={defaultKind} data-default-size={defaultSize} novalidate>
+  <fieldset class="group">
+    <legend class="eyebrow">Choose your artwork</legend>
+
+    {
+      originalAvailable ? (
+        <label class="opt">
+          <input
+            type="radio"
+            name={`kind-${work.id}`}
+            value="original"
+            data-price={work.originalPrice}
+            data-link={withReference(work.stripeOriginal, 'original')}
+            data-label="Original painting"
+            checked
+          />
+          <span class="opt-body">
+            <span class="opt-title">Original painting</span>
+            <span class="opt-sub">One of a kind · {inches(work.originalSize)}</span>
+          </span>
+          <span class="opt-price">{usd(work.originalPrice)}</span>
+        </label>
+      ) : (
+        <div class="opt is-sold" aria-disabled="true">
+          <span class="dot" aria-hidden="true" />
+          <span class="opt-body">
+            <span class="opt-title">Original painting</span>
+            <span class="opt-sub">One of a kind · {inches(work.originalSize)}</span>
+          </span>
+          <span class="opt-price">
+            <span class="sold-tag">Sold</span>
+            <s>{usd(work.soldAt ?? work.originalPrice)}</s>
+          </span>
+        </div>
+      )
+    }
+
+    <label class="opt">
+      <input
+        type="radio"
+        name={`kind-${work.id}`}
+        value="print"
+        data-label="Fine art reproduction"
+        checked={!originalAvailable}
+      />
+      <span class="opt-body">
+        <span class="opt-title">Fine art reproduction</span>
+        <span class="opt-sub">Made to order</span>
+      </span>
+      <span class="opt-price">{printFrom !== null ? `from ${usd(printFrom)}` : ''}</span>
+    </label>
+  </fieldset>
+
+  <fieldset class="group sizes" data-sizes hidden={originalAvailable}>
+    <legend class="eyebrow">Select a size</legend>
+    {
+      work.prints.map((p) => (
+        <label class:list={['opt', { 'is-unavailable': !p.available }]}>
+          <input
+            type="radio"
+            name={`size-${work.id}`}
+            value={p.key}
+            data-price={p.price}
+            data-link={withReference(p.stripe, `print_${p.key}`)}
+            data-label={`${p.label} reproduction`}
+            disabled={!p.available}
+            checked={p.key === defaultSize}
+          />
+          <span class="opt-body">
+            <span class="opt-title">{p.label}</span>
+            <span class="opt-sub">
+              {inches(p.size)}
+              {p.reviewBeforeSale && <span class="note"> · confirmed with the artist before sale</span>}
+            </span>
+          </span>
+          <span class="opt-price">{p.available ? usd(p.price) : 'Unavailable'}</span>
+        </label>
+      ))
+    }
+  </fieldset>
+
+  <div class="buy-row">
+    <p class="total">
+      <span class="total-label" data-total-label></span>
+      <strong class="total-price" data-total-price></strong>
+    </p>
+    <a class="btn btn-primary buy" data-buy href="#" aria-disabled="true" rel="noopener">Buy</a>
+    <p class="pending muted" data-pending hidden>Checkout for this option is being set up.</p>
+  </div>
+</form>
+
+<script>
+  // Progressive: without JS the form still shows every option and price; with JS the total and
+  // the Stripe Payment Link follow the selection.
+  function setup(form: HTMLFormElement) {
+    const sizes = form.querySelector<HTMLFieldSetElement>('[data-sizes]');
+    const totalLabel = form.querySelector<HTMLElement>('[data-total-label]')!;
+    const totalPrice = form.querySelector<HTMLElement>('[data-total-price]')!;
+    const buy = form.querySelector<HTMLAnchorElement>('[data-buy]')!;
+    const pending = form.querySelector<HTMLElement>('[data-pending]')!;
+    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+    const selected = () => {
+      const kind = form.querySelector<HTMLInputElement>('input[value="original"]:checked, input[value="print"]:checked');
+      if (!kind) return null;
+      if (kind.value === 'original') return kind;
+      return form.querySelector<HTMLInputElement>('[data-sizes] input:checked');
+    };
+
+    const render = () => {
+      const kindInput = form.querySelector<HTMLInputElement>('input[value="original"]:checked, input[value="print"]:checked');
+      const isPrint = kindInput?.value === 'print';
+      if (sizes) sizes.hidden = !isPrint;
+      const pick = selected();
+      if (!pick) return;
+      const price = Number(pick.dataset.price);
+      const link = pick.dataset.link || '';
+      totalLabel.textContent = pick.dataset.label ?? '';
+      totalPrice.textContent = fmt.format(price);
+      buy.textContent = isPrint ? 'Buy reproduction' : 'Buy original';
+      if (link) {
+        buy.href = link;
+        buy.removeAttribute('aria-disabled');
+        buy.removeAttribute('tabindex');
+        pending.hidden = true;
+      } else {
+        buy.href = '#';
+        buy.setAttribute('aria-disabled', 'true');
+        pending.hidden = false;
+      }
+      form.dispatchEvent(
+        new CustomEvent('variant_select', {
+          bubbles: true,
+          detail: { work: form.dataset.work, kind: isPrint ? 'print' : 'original', size: isPrint ? pick.value : null },
+        }),
+      );
+    };
+
+    form.addEventListener('change', render);
+    buy.addEventListener('click', (e) => {
+      if (buy.getAttribute('aria-disabled') === 'true') {
+        e.preventDefault();
+        return;
+      }
+      const pick = selected();
+      form.dispatchEvent(
+        new CustomEvent('buy_click', { bubbles: true, detail: { work: form.dataset.work, variant: pick?.dataset.label } }),
+      );
+    });
+    render();
+  }
+
+  document.querySelectorAll<HTMLFormElement>('form[data-purchase]').forEach(setup);
+</script>
+
+<style>
+  .purchase {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .group {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .group legend {
+    margin-bottom: 0.6rem;
+    padding: 0;
+  }
+  .opt {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: pointer;
+    transition: border-color 200ms var(--ease), background-color 200ms var(--ease);
+  }
+  .opt:hover {
+    border-color: rgba(31, 29, 26, 0.4);
+  }
+  .opt:has(input:checked) {
+    border-color: var(--charcoal);
+  }
+  .opt:has(input:disabled),
+  .opt.is-sold {
+    cursor: default;
+    color: var(--mute);
+    background: transparent;
+  }
+  .opt input {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    border: 1px solid var(--charcoal);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+  }
+  .opt input::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--charcoal);
+    transform: scale(0);
+    transition: transform 150ms var(--ease);
+  }
+  .opt input:checked::before {
+    transform: scale(1);
+  }
+  .opt input:disabled {
+    border-color: var(--mute);
+  }
+  .dot {
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+  }
+  .opt-body {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+  .opt-title {
+    font-size: 0.95rem;
+    color: var(--charcoal);
+  }
+  .is-sold .opt-title,
+  .opt:has(input:disabled) .opt-title {
+    color: var(--mute);
+  }
+  .opt-sub {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .note {
+    color: var(--mute);
+  }
+  .opt-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .sold-tag {
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .buy-row {
+    display: grid;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+  .total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .total-price {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--charcoal);
+    font-variant-numeric: tabular-nums;
+  }
+  .buy {
+    width: 100%;
+  }
+  .pending {
+    font-size: 0.78rem;
+  }
+</style>

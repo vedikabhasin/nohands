@@ -1,0 +1,176 @@
+{
+  "water-droplets": [
+    {
+      "path": "src/assets/works/water-droplets/water-droplets-1.jpg",
+      "role": "artwork",
+      "width_px": 3284,
+      "bytes": 3851470,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i1_w3284.jpeg"
+    },
+    {
+      "path": "reference/square-mockups/water-droplets/water-droplets-2.png",
+      "role": "mockup",
+      "width_px": 2611,
+      "bytes": 11993349,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i2_w2611.png"
+    },
+    {
+      "path": "reference/square-mockups/water-droplets/water-droplets-3.png",
+      "role": "mockup-sold",
+      "width_px": 2415,
+      "bytes": 10887258,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i3_w2415.png"
+    }
+  ],
+  "a-still-life": [
+    {
+      "path": "reference/square-mockups/a-still-life/a-still-life-1.png",
+      "role": "mockup",
+      "width_px": 3200,
+      "bytes": 14384236,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p19_i2_w3200.png"
+    },
+    {
+      "path": "src/assets/works/a-still-life/a-still-life-2.jpg",
+      "role": "artwork",
+      "width_px": 2456,
+      "bytes": 2286395,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p19_i1_w2456.jpeg"
+    }
+  ],
+  "reflection": [
+    {
+      "path": "src/assets/works/reflection/reflection-1.jpg",
+      "role": "artwork",
+      "width_px": 3303,
+      "bytes": 3139308,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p17_i1_w3303.jpeg"
+    },
+    {
+      "path": "reference/square-mockups/reflection/reflection-2.png",
+      "role": "mockup",
+      "width_px": 1875,
+      "bytes": 4517007,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p17_i2_w1875.png"
+    }
+  ],
+  "bam": [
+    {
+      "path": "reference/square-mockups/bam/bam-1.png",
+      "role": "mockup",
+      "width_px": 3000,
+      "bytes": 8621190,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p1_i2_w3000.png"
+    },
+    {
+      "path": "src/assets/works/bam/bam-2.png",
+      "role": "artwork",
+      "width_px": 612,
+      "bytes": 312820,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p1_i1_w612.png"
+    }
+  ],
+  "pop": [
+    {
+      "path": "src/assets/works/pop/pop-1.jpg",
+      "role": "artwork",
+      "width_px": 3776,
+      "bytes": 5484721,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i2_w3776.jpeg"
+    },
+    {
+      "path": "reference/square-mockups/pop/pop-2.png",
+      "role": "mockup",
+      "width_px": 3000,
+      "bytes": 8775720,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i3_w3000.png"
+    },
+    {
+      "path": "reference/square-mockups/pop/pop-3.png",
+      "role": "mockup-sold",
+      "width_px": 2415,
+      "bytes": 9789232,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i1_w2415.png"
+    }
+  ],
+  "wham": [
+    {
+      "path": "reference/square-mockups/wham/wham-1.png",
+      "role": "mockup",
+      "width_px": 1875,
+      "bytes": 4655176,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p5_i2_w1875.png"
+    },
+    {
+      "path": "src/assets/works/wham/wham-2.png",
+      "role": "artwork",
+      "width_px": 1260,
+      "bytes": 563088,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p5_i1_w1260.png"
+    }
+  ],
+  "slash": [
+    {
+      "path": "reference/square-mockups/slash/slash-1.png",
+      "role": "mockup",
+      "width_px": 1875,
+      "bytes": 4689576,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p6_i2_w1875.png"
+    },
+    {
+      "path": "src/assets/works/slash/slash-2.png",
+      "role": "artwork",
+      "width_px": 613,
+      "bytes": 327369,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p6_i1_w613.png"
+    }
+  ],
+  "color-me-mine": [
+    {
+      "path": "src/assets/works/color-me-mine/color-me-mine-1.jpg",
+      "role": "artwork",
+      "width_px": 5322,
+      "bytes": 3968332,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p11_i1_w5322.jpeg"
+    },
+    {
+      "path": "reference/square-mockups/color-me-mine/color-me-mine-2.png",
+      "role": "mockup",
+      "width_px": 2480,
+      "bytes": 4152591,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p11_i2_w2480.png"
+    }
+  ],
+  "greek-god": [
+    {
+      "path": "reference/square-mockups/greek-god/greek-god-1.png",
+      "role": "mockup",
+      "width_px": 3200,
+      "bytes": 13611977,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p15_i2_w3200.png"
+    },
+    {
+      "path": "src/assets/works/greek-god/greek-god-2.jpg",
+      "role": "artwork",
+      "width_px": 1167,
+      "bytes": 146042,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p15_i1_w1167.jpeg"
+    }
+  ],
+  "rhino": [
+    {
+      "path": "src/assets/works/rhino/rhino-1.jpg",
+      "role": "artwork",
+      "width_px": 5076,
+      "bytes": 4065764,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p12_i1_w5076.jpeg"
+    },
+    {
+      "path": "reference/square-mockups/rhino/rhino-2.png",
+      "role": "mockup",
+      "width_px": 2480,
+      "bytes": 3778411,
+      "source": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p12_i2_w2480.png"
+    }
+  ]
+}
