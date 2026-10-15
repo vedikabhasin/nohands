@@ -29,7 +29,9 @@ The exhibition `slug` is `null` until Vedi names the exhibition.
 
 ## Images
 
-`npm run fetch-images` downloads every file the data lists, once, from Square. The artwork files live in `src/assets/works/{id}/`; the room mockups live in `reference/square-mockups/` and never ship.
+`npm run fetch-images` downloads every file the data lists from Square, skipping files already present; it also runs
+automatically before every build (`prebuild`), so a checkout without the images still builds while Square is up.
+Commit the downloaded files before Square is retired. The artwork files live in `src/assets/works/{id}/`; the room mockups live in `reference/square-mockups/` and never ship.
 `src/assets/works/manifest.json` records each file's `role`: `artwork` (the painting alone, used on the site), `mockup`
 (generic room scene, unused), or `mockup-sold` (room scene with a baked-in badge, unused). Exactly one file per work is the
 artwork. Square is never read at runtime.
