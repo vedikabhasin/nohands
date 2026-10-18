@@ -268,6 +268,16 @@ export function inches(size: Inches): string {
   return `${trim(size.width)} × ${trim(size.height)} in`;
 }
 
+export function centimetres(size: Inches): string {
+  return `${Math.round(size.width * 2.54)} × ${Math.round(size.height * 2.54)} cm`;
+}
+
+/** Lowest available reproduction price, or null when none is available. */
+export function printFrom(work: Work): number | null {
+  const prices = work.prints.filter((p) => p.available).map((p) => p.price);
+  return prices.length ? Math.min(...prices) : null;
+}
+
 export function usd(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
 }

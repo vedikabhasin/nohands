@@ -1,51 +1,70 @@
 /**
  * Client behaviour for the gallery walk.
- * - Parallax: sets --p (scroll progress, -1..1) on each wall; the layers translate from it in CSS.
- * - Interactive realism: pointer position (desktop) or device tilt (mobile) sets --tx/--ty on each
- *   painting so its plane and cast shadow respond. Transforms only; nothing paints on scroll.
- * - Detail panel over the walk, Previous/Next, ?at={work} deep link, wall indicator.
- * Analytics hooks dispatch DOM events; the PostHog wiring listens for them (build step 7).
+ * Each stop is a tall section with a sticky stage. Scroll progress through the stop drives
+ * --zoom (wall view to painting view and back) and --view (details on or off). Both are set as
+ * CSS variables; every animated property is transform or opacity, so nothing paints on scroll.
+ * Also: pointer and device tilt on the painting plane, the purchase sheet, Previous/Next,
+ * the ?at={work} deep link, and the position indicator. Analytics hooks dispatch DOM events.
  */
 export function initWalk() {
   const walk = document.querySelector<HTMLElement>('[data-walk]');
   if (!walk) return;
 
-  const walls = Array.from(walk.querySelectorAll<HTMLElement>('.wall'));
-  const figures = Array.from(walk.querySelectorAll<HTMLElement>('figure[data-work]'));
-  const order = figures.map((f) => f.dataset.work!);
-  const indicator = document.querySelector<HTMLElement>('[data-wall-current]');
+  const stops = Array.from(walk.querySelectorAll<HTMLElement>('section[data-stop]'));
+  const order = stops.map((s) => s.dataset.stop!);
+  const indicator = document.querySelector<HTMLElement>('[data-stop-current]');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  // --- Reveal and indicator --------------------------------------------------------------
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('is-visible');
-        const n = (entry.target as HTMLElement).dataset.wall;
-        if (n && indicator && entry.intersectionRatio >= 0.5) {
-          indicator.textContent = n;
-          track('wall_view', { wall: Number(n) });
-        }
-      }
-    },
-    { threshold: [0.15, 0.5] },
-  );
-  walls.forEach((w) => io.observe(w));
+  const smooth = (p: number, a: number, b: number) => {
+    const t = Math.max(0, Math.min(1, (p - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
 
-  // --- Parallax --------------------------------------------------------------------------
-  if (!reduced) {
+  // --- Scroll choreography ---------------------------------------------------------------
+  let current = -1;
+  const setCurrent = (i: number) => {
+    if (i === current || i < 0) return;
+    current = i;
+    if (indicator) indicator.textContent = String(i + 1);
+    track('wall_view', { wall: Number(stops[i].dataset.wall), work: order[i] });
+  };
+
+  if (reduced) {
+    stops.forEach((s) => {
+      s.style.setProperty('--zoom', '1');
+      s.style.setProperty('--view', '1');
+      s.classList.add('is-view');
+    });
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setCurrent(stops.indexOf(e.target as HTMLElement))),
+      { threshold: 0.5 },
+    );
+    stops.forEach((s) => io.observe(s));
+  } else {
     let ticking = false;
     const update = () => {
       ticking = false;
       const vh = window.innerHeight;
-      for (const wall of walls) {
-        const r = wall.getBoundingClientRect();
+      let best = -1;
+      let bestDist = Infinity;
+      for (const [i, stop] of stops.entries()) {
+        const r = stop.getBoundingClientRect();
         if (r.bottom < -vh || r.top > 2 * vh) continue;
-        const p = (r.top + r.height / 2 - vh / 2) / vh;
-        wall.style.setProperty('--p', Math.max(-1.2, Math.min(1.2, p)).toFixed(4));
+        const travel = r.height - vh;
+        const p = travel > 0 ? Math.max(0, Math.min(1, -r.top / travel)) : 0.5;
+        const zoom = smooth(p, 0, 0.34) - smooth(p, 0.66, 1);
+        const view = smooth(p, 0.24, 0.4) - smooth(p, 0.6, 0.76);
+        stop.style.setProperty('--zoom', zoom.toFixed(4));
+        stop.style.setProperty('--view', view.toFixed(4));
+        stop.classList.toggle('is-view', view > 0.55);
+        const dist = Math.abs(r.top + Math.min(r.height, vh) / 2 - vh / 2);
+        if (r.top <= vh / 2 && r.bottom >= vh / 2 && dist < bestDist) {
+          best = i;
+          bestDist = dist;
+        }
       }
+      setCurrent(best);
     };
     const onScroll = () => {
       if (ticking) return;
@@ -58,9 +77,9 @@ export function initWalk() {
   }
 
   // --- Tilt: pointer on desktop, device orientation on mobile ----------------------------
-  const setTilt = (fig: HTMLElement, tx: number, ty: number) => {
-    fig.style.setProperty('--tx', tx.toFixed(3));
-    fig.style.setProperty('--ty', ty.toFixed(3));
+  const setTilt = (el: HTMLElement, tx: number, ty: number) => {
+    el.style.setProperty('--tx', tx.toFixed(3));
+    el.style.setProperty('--ty', ty.toFixed(3));
   };
   const clamp = (v: number) => Math.max(-1, Math.min(1, v));
 
@@ -70,17 +89,15 @@ export function initWalk() {
     let py = 0;
     const apply = () => {
       raf = 0;
-      for (const fig of figures) {
-        const r = fig.getBoundingClientRect();
+      for (const stop of stops) {
+        const art = stop.querySelector<HTMLElement>('.art');
+        if (!art) continue;
+        const r = art.getBoundingClientRect();
         if (r.bottom < 0 || r.top > window.innerHeight) continue;
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        // Influence fades with distance so only the painting near the pointer responds.
-        const dx = (px - cx) / (r.width * 1.5);
-        const dy = (py - cy) / (r.height * 1.5);
-        const dist = Math.hypot(dx, dy);
-        const falloff = Math.max(0, 1 - Math.max(0, dist - 0.6));
-        setTilt(fig, clamp(dx) * falloff, clamp(dy) * falloff);
+        const dx = (px - (r.left + r.width / 2)) / (r.width * 1.5);
+        const dy = (py - (r.top + r.height / 2)) / (r.height * 1.5);
+        const falloff = Math.max(0, 1 - Math.max(0, Math.hypot(dx, dy) - 0.6));
+        setTilt(stop, clamp(dx) * falloff, clamp(dy) * falloff);
       }
     };
     walk.addEventListener(
@@ -92,14 +109,14 @@ export function initWalk() {
       },
       { passive: true },
     );
-    walk.addEventListener('pointerleave', () => figures.forEach((f) => setTilt(f, 0, 0)));
+    walk.addEventListener('pointerleave', () => stops.forEach((s) => setTilt(s, 0, 0)));
   } else if (!reduced && 'DeviceOrientationEvent' in window) {
     let raf = 0;
     let gx = 0;
     let gy = 0;
     const apply = () => {
       raf = 0;
-      for (const fig of figures) setTilt(fig, gx, gy);
+      stops.forEach((s) => setTilt(s, gx, gy));
     };
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.gamma == null || e.beta == null) return;
@@ -121,11 +138,15 @@ export function initWalk() {
     }
   }
 
-  // --- Detail panel ----------------------------------------------------------------------
+  // --- Purchase sheet ----------------------------------------------------------------------
   let lastTrigger: HTMLElement | null = null;
+  const dialogFor = (id: string) => document.querySelector<HTMLDialogElement>(`[data-dialog="${CSS.escape(id)}"]`);
 
-  function dialogFor(id: string) {
-    return document.querySelector<HTMLDialogElement>(`[data-dialog="${CSS.escape(id)}"]`);
+  function scrollToStop(id: string, behavior: ScrollBehavior) {
+    const stop = document.getElementById(`stop-${id}`);
+    if (!stop) return;
+    const top = stop.offsetTop + (stop.offsetHeight - window.innerHeight) / 2;
+    window.scrollTo({ top, behavior });
   }
 
   function setAt(id: string | null) {
@@ -139,14 +160,13 @@ export function initWalk() {
     const dialog = dialogFor(id);
     if (!dialog) return;
     if (trigger) lastTrigger = trigger;
-    const current = document.querySelector<HTMLDialogElement>('dialog[open]');
-    if (current && current !== dialog) current.close('switch');
+    const open = document.querySelector<HTMLDialogElement>('dialog[open]');
+    if (open && open !== dialog) open.close('switch');
     dialog.showModal();
     dialog.scrollTop = 0;
     dialog.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
     setAt(id);
-    // Keep the walk parked at this work behind the panel so closing lands on it.
-    document.getElementById(`work-${id}`)?.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+    scrollToStop(id, 'instant' as ScrollBehavior);
     track('work_open', { work: id, source });
   }
 
@@ -181,20 +201,14 @@ export function initWalk() {
   document.addEventListener('keydown', (e) => {
     const openDialog = document.querySelector<HTMLDialogElement>('dialog[open]');
     if (!openDialog) return;
-    const id = openDialog.dataset.dialog!;
-    const i = order.indexOf(id);
+    const i = order.indexOf(openDialog.dataset.dialog!);
     if (e.key === 'ArrowRight' && order[i + 1]) open(order[i + 1], 'nav');
     if (e.key === 'ArrowLeft' && order[i - 1]) open(order[i - 1], 'nav');
   });
 
-  // Deep link: ?at={work} lands on that work.
+  // Deep link: ?at={work} lands in that painting's view.
   const at = new URL(location.href).searchParams.get('at');
-  if (at && order.includes(at)) {
-    document.getElementById(`work-${at}`)?.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
-    walls.forEach((w) => w.classList.add('is-visible'));
-  } else if (reduced) {
-    walls.forEach((w) => w.classList.add('is-visible'));
-  }
+  if (at && order.includes(at)) scrollToStop(at, 'instant' as ScrollBehavior);
 
   track('exhibition_view', { exhibition: walk.dataset.walk });
   window.addEventListener('pagehide', () => {

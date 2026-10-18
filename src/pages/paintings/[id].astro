@@ -1,10 +1,11 @@
 ---
 /**
- * Direct, indexable page for one painting. Same content as the panel, plus a way into the walk.
+ * Direct, indexable page for one painting: the painting view, then the purchase section.
  */
 import Base from '@/layouts/Base.astro';
+import Stop from '@/components/Stop.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
-import { getExhibitions, inches, siteTagline, paintingPageTitle, paintingPath, usd, priceFrom } from '@/lib/exhibition';
+import { getExhibitions, inches, siteTagline, paintingPageTitle, paintingPath, walkPathAt, usd, priceFrom } from '@/lib/exhibition';
 
 export function getStaticPaths() {
   return getExhibitions().flatMap((exhibition) =>
@@ -21,5 +22,25 @@ const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}
 ---
 
 <Base title={paintingPageTitle(work)} description={description} canonical={paintingPath(work)}>
-  <WorkDetail work={work} exhibition={exhibition} mode="page" />
+  <Stop work={work} exhibition={exhibition} static buyHref="#buy" />
+  <section class="buy-section" id="buy">
+    <WorkDetail work={work} exhibition={exhibition} mode="page" />
+    <p class="enter">
+      <a class="pill" href={walkPathAt(exhibition, work)}>Enter the exhibition at this painting</a>
+    </p>
+  </section>
 </Base>
+
+<style>
+  .buy-section {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 1rem clamp(1rem, 3vw, 2rem) 4rem;
+    scroll-margin-top: var(--header-h);
+  }
+  .enter {
+    text-align: center;
+  }
+</style>

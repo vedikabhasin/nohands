@@ -1,10 +1,10 @@
 ---
 /**
- * The gallery walk. One section per wall, every work's detail panel pre-rendered in a <dialog>
- * so opening a painting never leaves the page or loses scroll position.
+ * The gallery walk: one stop per painting in walk order. Every painting's purchase sheet is
+ * pre-rendered in a <dialog> so buying never leaves the page or loses the visitor's place.
  */
 import Base from '@/layouts/Base.astro';
-import Wall from '@/components/Wall.astro';
+import Stop from '@/components/Stop.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
 import { getExhibitions, siteTagline, exhibitionPath, usd, priceFrom } from '@/lib/exhibition';
 
@@ -13,24 +13,23 @@ export function getStaticPaths() {
 }
 
 const { exhibition } = Astro.props;
-const total = exhibition.walls.length;
-const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.length} original paintings on paper, shown as a walk through ${total} walls. Originals and fine art reproductions from ${usd(Math.min(...exhibition.works.map(priceFrom)))}.`;
+const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.length} original paintings on paper, shown one at a time as a walk through the gallery. Originals and fine art reproductions from ${usd(Math.min(...exhibition.works.map(priceFrom)))}.`;
 ---
 
 <Base title={`${exhibition.title} | ${siteTagline}`} description={description} canonical={exhibitionPath(exhibition)} bodyClass="is-walk">
   <h1 class="visually-hidden">{exhibition.title}</h1>
 
   <div class="walk" data-walk={exhibition.id}>
-    {exhibition.walls.map((wall) => <Wall wall={wall} total={total} />)}
+    {exhibition.works.map((work) => <Stop work={work} exhibition={exhibition} />)}
   </div>
 
-  <p class="indicator" aria-live="polite">
-    <span class="eyebrow">Wall <span data-wall-current>1</span> of {total}</span>
+  <p class="indicator chip" aria-live="polite">
+    <span data-stop-current>1</span>&nbsp;/&nbsp;{exhibition.works.length}
   </p>
 
   {
     exhibition.works.map((work) => (
-      <dialog class="work-dialog" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={work.title}>
+      <dialog class="sheet" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={`Buy ${work.title}`}>
         <WorkDetail work={work} exhibition={exhibition} mode="panel" />
       </dialog>
     ))
@@ -43,53 +42,55 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
 </Base>
 
 <style>
-  .walk {
+  :global(html:has(body.is-walk)) {
     scroll-snap-type: y proximity;
   }
   @media (prefers-reduced-motion: reduce) {
-    .walk {
+    :global(html:has(body.is-walk)) {
       scroll-snap-type: none;
     }
   }
   .indicator {
     position: fixed;
-    left: clamp(1rem, 3vw, 2.5rem);
-    bottom: 1.25rem;
+    left: 50%;
+    top: calc(var(--header-h) / 2);
     z-index: 10;
+    transform: translate(-50%, -50%);
     margin: 0;
-    padding: 0.4rem 0.7rem;
-    background: rgba(244, 240, 232, 0.8);
-    backdrop-filter: blur(6px);
     pointer-events: none;
+    font-variant-numeric: tabular-nums;
   }
-  .work-dialog {
-    width: 100vw;
+  .sheet {
+    width: min(100vw, 64rem);
     max-width: 100vw;
-    height: 100svh;
-    max-height: 100svh;
-    margin: 0;
+    max-height: 92svh;
+    margin: auto;
     padding: 0;
     border: 0;
-    background: var(--ivory);
+    border-radius: var(--radius-card);
+    background: var(--ground);
     color: var(--ink);
-    overflow: hidden;
+    overflow: auto;
+    box-shadow: var(--shadow-lift);
   }
-  .work-dialog::backdrop {
-    background: rgba(31, 29, 26, 0.5);
+  .sheet::backdrop {
+    background: rgba(20, 20, 19, 0.45);
+    backdrop-filter: blur(4px);
   }
   @media (max-width: 899px) {
-    .work-dialog {
-      overflow-y: auto;
+    .sheet {
+      margin: auto 0 0 0;
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
     }
   }
   @media (prefers-reduced-motion: no-preference) {
-    .work-dialog[open] {
-      animation: dialog-in 320ms var(--ease);
+    .sheet[open] {
+      animation: sheet-in 360ms var(--spring);
     }
-    @keyframes dialog-in {
+    @keyframes sheet-in {
       from {
         opacity: 0;
-        transform: translateY(12px);
+        transform: translateY(24px) scale(0.985);
       }
       to {
         opacity: 1;

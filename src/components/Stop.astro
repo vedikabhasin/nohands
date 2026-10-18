@@ -1,0 +1,447 @@
+---
+/**
+ * One stop on the walk: a single painting. Scrolling through the stop dollies from the wall view
+ * (painting hung small on a room wall) into the painting view (painting large, room gone, title,
+ * price tag, availability lines, medium, dimensions and one button), then back out to the wall.
+ * The walk script sets --zoom and --view (0..1) on the section; everything else is CSS on
+ * transform and opacity only. `static` renders the painting view with no scroll choreography,
+ * used by /paintings/{id} and by reduced motion.
+ */
+import { Picture } from 'astro:assets';
+import {
+  altText,
+  centimetres,
+  inches,
+  printFrom,
+  usd,
+  widthsFor,
+  type Exhibition,
+  type Work,
+} from '@/lib/exhibition';
+
+interface Props {
+  work: Work;
+  exhibition: Exhibition;
+  static?: boolean;
+  /** Where the primary button goes in static mode (anchor), otherwise it opens the purchase sheet. */
+  buyHref?: string;
+}
+
+const { work, exhibition, static: isStatic = false, buyHref = '#buy' } = Astro.props;
+const widths = widthsFor(work.image, [480, 720, 960, 1280, 1600, 2000], 2000);
+const from = printFrom(work);
+const sold = work.status === 'sold';
+const Title = isStatic ? 'h1' : 'h2';
+---
+
+<section
+  class:list={['stop', { 'stop--static': isStatic, 'is-view': isStatic }]}
+  id={`stop-${work.id}`}
+  data-stop={work.id}
+  data-index={work.index}
+  data-wall={work.wall}
+  style={isStatic ? '--zoom: 1; --view: 1; --tx: 0; --ty: 0;' : '--zoom: 0; --view: 0; --tx: 0; --ty: 0;'}
+>
+  <div class="stage">
+    <div class="room" aria-hidden="true">
+      <span class="floor"></span>
+      <span class="pilaster pilaster-l"></span>
+      <span class="pilaster pilaster-r"></span>
+    </div>
+
+    <div class="title-block">
+      <Title class="title">{work.title}</Title>
+      <p class="subtitle">
+        {exhibition.title} · {work.index + 1} of {exhibition.works.length}
+      </p>
+    </div>
+
+    <div class="hang">
+      <figure class="work" id={`work-${work.id}`} data-work={work.id}>
+        <div class="plane">
+          <span class="shadow" aria-hidden="true"></span>
+          <span class="outline" aria-hidden="true"></span>
+          <div class="art" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
+            <Picture
+              src={work.image}
+              widths={widths}
+              sizes="(min-width: 900px) 44vw, 86vw"
+              formats={['avif', 'webp']}
+              fallbackFormat="jpg"
+              quality={82}
+              alt={altText(work)}
+              loading={work.index === 0 || isStatic ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchpriority={work.index === 0 || isStatic ? 'high' : 'auto'}
+            />
+          </div>
+          <span class:list={['tag', { 'tag--sold': sold }]} aria-hidden="true">
+            {sold ? 'Sold' : usd(work.originalPrice)}
+          </span>
+        </div>
+        <figcaption class="plate">
+          <span class="plate-title">{work.title}</span>
+          <span class="plate-meta">{work.medium} · {inches(work.originalSize)}</span>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="details">
+      <ul class="facts">
+        <li>
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7L5.8 21l1.6-7L2 9.3l7.1-.7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          {sold ? <span>One-of-a-kind original · sold at {usd(work.soldAt ?? work.originalPrice)}</span> : <span>One-of-a-kind original · {usd(work.originalPrice)}</span>}
+        </li>
+        {from !== null && (
+          <li>
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 16l3-4 2 2.5 2-3 3 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span>Fine art reproduction from {usd(from)}</span>
+          </li>
+        )}
+      </ul>
+      <p class="medium">{work.medium}</p>
+      <p class="dims">{inches(work.originalSize)} <span aria-hidden="true">|</span> {centimetres(work.originalSize)}</p>
+      {
+        isStatic ? (
+          <a class="pill pill-primary buy" href={buyHref}>{sold ? 'Buy a reproduction' : 'Buy'}</a>
+        ) : (
+          <button class="pill pill-primary buy" type="button" data-open={work.id} aria-haspopup="dialog">
+            {sold ? 'Buy a reproduction' : 'Buy'}
+          </button>
+        )
+      }
+    </div>
+  </div>
+  {!isStatic && <div class="snap" aria-hidden="true"></div>}
+</section>
+
+<style>
+  .stop {
+    position: relative;
+    height: 250svh;
+    scroll-snap-align: start;
+  }
+  .snap {
+    position: absolute;
+    top: calc((100% - 100svh) / 2);
+    height: 100svh;
+    width: 1px;
+    scroll-snap-align: start;
+    pointer-events: none;
+  }
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: 'title' 'hang' 'details';
+    padding: calc(var(--header-h) + 0.5rem) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    isolation: isolate;
+  }
+
+  /* Room: recedes and fades as the visitor approaches the painting. */
+  .room {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    transform: scale(calc(1 + var(--zoom) * 0.3));
+    opacity: calc(1 - var(--view) * 0.9);
+    will-change: transform, opacity;
+    background:
+      radial-gradient(110% 55% at 50% 0%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 60%),
+      linear-gradient(to bottom, var(--ground) 0%, var(--ground) 76%, var(--ground-deep) 76.2%, var(--ground-low) 100%);
+  }
+  .floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 76%;
+    height: 1px;
+    background: rgba(20, 20, 19, 0.08);
+  }
+  .pilaster {
+    position: absolute;
+    top: 6%;
+    bottom: 24%;
+    width: clamp(2rem, 6vw, 5rem);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.25), rgba(20, 20, 19, 0.03));
+    box-shadow: inset -1px 0 0 rgba(20, 20, 19, 0.05);
+  }
+  .pilaster-l {
+    left: 4%;
+  }
+  .pilaster-r {
+    right: 4%;
+    transform: scaleX(-1);
+  }
+
+  .title-block {
+    grid-area: title;
+    z-index: 2;
+    text-align: center;
+    opacity: var(--view);
+    transform: translate3d(0, calc((1 - var(--view)) * -14px), 0);
+    will-change: transform, opacity;
+  }
+  .title {
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    text-wrap: balance;
+  }
+  .subtitle {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--mute);
+  }
+
+  /* The painting: scales from the hang size to the display size as --zoom rises. */
+  .hang {
+    grid-area: hang;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    transform: translate3d(calc(var(--view) * var(--shift-x, 0px)), calc(var(--view) * var(--shift-y, 0px)), 0)
+      scale(calc(0.5 + var(--zoom) * 0.5));
+    will-change: transform;
+    pointer-events: none;
+  }
+  .hang .plane {
+    pointer-events: auto;
+  }
+  .work {
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+    justify-items: center;
+    max-width: 100%;
+  }
+  .plane {
+    position: relative;
+    transform: perspective(1400px) rotateX(calc(var(--ty) * -3deg)) rotateY(calc(var(--tx) * 4deg));
+    transform-style: preserve-3d;
+    transition: transform 160ms linear;
+  }
+  .art {
+    position: relative;
+    aspect-ratio: var(--ratio);
+    width: min(86vw, calc(46svh * (var(--ratio))));
+    overflow: hidden;
+    background: var(--ground-low);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+  }
+  .art :global(picture),
+  .art :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.14;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.43 0 0 0 0 0.40 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+  }
+  .shadow {
+    position: absolute;
+    inset: 8% 4% -4% 4%;
+    background: rgba(20, 20, 19, 0.45);
+    filter: blur(24px);
+    transform: translate3d(calc(var(--tx) * -14px), calc(var(--ty) * -10px + 12px), -1px);
+    transition: transform 160ms linear;
+  }
+  /* Outline: a thin offset stroke around the picture that steps out as the painting view opens. */
+  .outline {
+    position: absolute;
+    inset: calc(-6px - var(--view) * 8px);
+    border: 1.5px solid rgba(20, 20, 19, calc(0.18 + var(--view) * 0.3));
+    border-radius: 4px;
+    pointer-events: none;
+    will-change: inset;
+  }
+  .tag {
+    position: absolute;
+    top: -0.9rem;
+    right: -0.9rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    box-shadow: var(--shadow-soft);
+    transform: rotate(-6deg) scale(calc(0.6 + var(--view) * 0.4));
+    opacity: var(--view);
+    transform-origin: 20% 80%;
+  }
+  .tag--sold {
+    background: var(--accent);
+  }
+  .plate {
+    display: grid;
+    gap: 0.1rem;
+    justify-items: center;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    opacity: calc(1 - var(--view) * 2.5);
+  }
+  .plate-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--ink);
+  }
+
+  .details {
+    grid-area: details;
+    z-index: 2;
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+    text-align: center;
+    opacity: var(--view);
+    transform: translate3d(0, calc((1 - var(--view)) * 24px), 0);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+  .stop.is-view .details {
+    pointer-events: auto;
+  }
+  .facts {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.82rem;
+    color: var(--ink);
+  }
+  .facts li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    justify-content: center;
+  }
+  .medium {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+  .dims {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-top: -0.35rem;
+  }
+  .dims span {
+    margin: 0 0.4rem;
+    color: var(--mute);
+  }
+  .buy {
+    margin-top: 0.5rem;
+    min-width: 14rem;
+  }
+  /* Haptic-like entrance: lines land with a small overshoot once the painting view opens. */
+  .stop.is-view .facts li,
+  .stop.is-view .medium,
+  .stop.is-view .dims,
+  .stop.is-view .buy {
+    animation: land 520ms var(--spring) both;
+  }
+  .stop.is-view .facts li:nth-child(2) { animation-delay: 60ms; }
+  .stop.is-view .medium { animation-delay: 120ms; }
+  .stop.is-view .dims { animation-delay: 160ms; }
+  .stop.is-view .buy { animation-delay: 220ms; }
+  @keyframes land {
+    from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Desktop: painting view is painting left, details right. */
+  @media (min-width: 900px) {
+    .stage {
+      --shift-x: -19vw;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+      grid-template-areas: 'hang hang';
+      padding: var(--header-h) clamp(2rem, 6vw, 6rem) 2rem;
+      align-items: center;
+    }
+    .title-block,
+    .details {
+      grid-area: hang;
+      justify-self: end;
+      align-self: center;
+      width: min(30rem, 42vw);
+      text-align: left;
+      justify-items: start;
+    }
+    .title-block {
+      align-self: center;
+      transform: translate3d(calc((1 - var(--view)) * 24px), -9rem, 0);
+    }
+    .details {
+      transform: translate3d(calc((1 - var(--view)) * 24px), 4.5rem, 0);
+    }
+    .facts li {
+      justify-content: flex-start;
+    }
+    .title {
+      font-size: clamp(2.4rem, 3.6vw, 3.6rem);
+    }
+    .art {
+      width: min(44vw, calc(72svh * (var(--ratio))));
+    }
+    .buy {
+      min-width: 16rem;
+    }
+  }
+
+  /* Static mode and reduced motion: a single painting view, no scroll choreography. */
+  .stop--static {
+    height: auto;
+    scroll-snap-align: none;
+  }
+  .stop--static .stage {
+    position: relative;
+    height: auto;
+    min-height: 100svh;
+  }
+  .stop--static,
+  .stop--static .details {
+    pointer-events: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stop {
+      height: auto;
+      min-height: 100svh;
+    }
+    .stage {
+      position: relative;
+      height: auto;
+      min-height: 100svh;
+    }
+    .snap {
+      display: none;
+    }
+    .details {
+      pointer-events: auto;
+    }
+    .plane,
+    .shadow {
+      transform: none !important;
+    }
+    .stop.is-view .facts li,
+    .stop.is-view .medium,
+    .stop.is-view .dims,
+    .stop.is-view .buy {
+      animation: none;
+    }
+  }
+</style>

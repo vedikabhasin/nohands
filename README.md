@@ -36,6 +36,13 @@ Commit the downloaded files before Square is retired. The artwork files live in 
 (generic room scene, unused), or `mockup-sold` (room scene with a baked-in badge, unused). Exactly one file per work is the
 artwork. Square is never read at runtime.
 
+## The walk
+
+`src/components/Stop.astro` is one painting. Each stop is a tall section with a sticky stage; the walk script
+(`src/scripts/walk.ts`) turns scroll progress into `--zoom` (wall view to painting view and back) and `--view`
+(details on or off). Everything animated is `transform` or `opacity`. Pointer and device tilt move the painting
+plane and its shadow. Reduced motion renders each stop as a static painting view.
+
 ## Routes
 
 | Route | What |

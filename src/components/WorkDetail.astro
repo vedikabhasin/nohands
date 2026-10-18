@@ -1,11 +1,12 @@
 ---
 /**
- * Artwork detail: the full image, title, medium, size and purchase options.
- * mode="panel" renders inside a <dialog> over the gallery; mode="page" renders /paintings/{id}.
+ * The purchase sheet (mode="panel", inside a <dialog> over the walk) and the purchase section of
+ * /paintings/{id} (mode="page"): a small view of the painting, the facts, the options, Previous
+ * and Next.
  */
 import { Picture } from 'astro:assets';
 import PurchaseOptions from '@/components/PurchaseOptions.astro';
-import { altText, inches, neighbours, paintingPath, walkPathAt, widthsFor, type Exhibition, type Work } from '@/lib/exhibition';
+import { altText, centimetres, inches, neighbours, paintingPath, widthsFor, type Exhibition, type Work } from '@/lib/exhibition';
 
 interface Props {
   work: Work;
@@ -15,9 +16,7 @@ interface Props {
 
 const { work, exhibition, mode } = Astro.props;
 const { prev, next } = neighbours(exhibition, work);
-const widths = widthsFor(work.image, [960, 1280, 1600, 2000, 2400], 2400);
-const Tag = mode === 'page' ? 'h1' : 'h2';
-const walkUrl = walkPathAt(exhibition, work);
+const widths = widthsFor(work.image, [480, 720, 960, 1280], 1280);
 ---
 
 <article class:list={['detail', `detail--${mode}`]} data-detail={work.id}>
@@ -26,45 +25,36 @@ const walkUrl = walkPathAt(exhibition, work);
       <Picture
         src={work.image}
         widths={widths}
-        sizes="(min-width: 900px) 60vw, 100vw"
+        sizes="(min-width: 900px) 32rem, 60vw"
         formats={['avif', 'webp']}
         fallbackFormat="jpg"
         quality={82}
         alt={altText(work)}
-        loading={mode === 'page' ? 'eager' : 'lazy'}
+        loading="lazy"
         decoding="async"
-        class="stage-img"
       />
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head">
-      <p class="eyebrow">
-        {exhibition.title} · {work.index + 1} of {exhibition.works.length}
-      </p>
+      <p class="eyebrow">{exhibition.title} · {work.index + 1} of {exhibition.works.length}</p>
       {mode === 'panel' && (
         <button class="icon-btn close" type="button" data-close aria-label="Close and return to the gallery">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.4" fill="none" /></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" /></svg>
         </button>
       )}
     </div>
 
     <header class="panel-title">
-      <Tag class="title">{work.title}</Tag>
+      <h2 class="title">{work.title}</h2>
       <p class="meta">{work.medium}</p>
-      <p class="meta muted">{inches(work.originalSize)}</p>
+      <p class="meta muted">{inches(work.originalSize)} <span aria-hidden="true">|</span> {centimetres(work.originalSize)}</p>
     </header>
 
     <PurchaseOptions work={work} />
 
-    {mode === 'page' && (
-      <p class="enter">
-        <a class="btn" href={walkUrl}>Enter the exhibition at this work</a>
-      </p>
-    )}
-
-    <nav class="walk-nav" aria-label="Move between works">
+    <nav class="walk-nav" aria-label="Move between paintings">
       {
         mode === 'panel' ? (
           <>
@@ -105,27 +95,23 @@ const walkUrl = walkPathAt(exhibition, work);
 <style>
   .detail {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) min(26.5rem, 100%);
-    min-height: 100svh;
-    background: var(--ivory);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 0;
+    background: var(--ground);
   }
   .stage {
     display: grid;
     place-items: center;
-    padding: clamp(1.25rem, 5vmin, 4rem);
-    background:
-      radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 65%),
-      var(--ivory-deep);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background: var(--ground-deep);
   }
   .stage-inner {
-    width: min(100%, calc((100svh - 2 * clamp(1.25rem, 5vmin, 4rem)) * (var(--ratio))));
+    width: min(100%, calc(60svh * (var(--ratio))));
     aspect-ratio: var(--ratio);
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.55),
-      0 1px 2px rgba(31, 29, 26, 0.12),
-      0 24px 60px -20px rgba(31, 29, 26, 0.4);
-    background: var(--ivory-low);
-    touch-action: pinch-zoom;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6), 0 20px 50px -18px rgba(20, 20, 19, 0.4);
+    background: var(--ground-low);
+    outline: 1.5px solid rgba(20, 20, 19, 0.25);
+    outline-offset: 10px;
   }
   .stage :global(img) {
     width: 100%;
@@ -135,32 +121,28 @@ const walkUrl = walkPathAt(exhibition, work);
   .panel {
     display: grid;
     align-content: start;
-    gap: 1.75rem;
-    padding: 1.5rem clamp(1.25rem, 3vw, 2.25rem) 2.5rem;
-    border-left: 1px solid var(--line);
-    background: var(--ivory);
+    gap: 1.5rem;
+    padding: 1.25rem clamp(1.25rem, 3vw, 2.25rem) 2rem;
   }
   .panel-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 2.75rem;
+    min-height: 3rem;
   }
   .panel-title {
     display: grid;
     gap: 0.35rem;
   }
   .title {
-    font-size: clamp(1.9rem, 3.2vw, 2.5rem);
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
   }
   .meta {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
   }
-  .enter {
-    margin: 0;
-  }
-  .enter .btn {
-    width: 100%;
+  .meta span {
+    margin: 0 0.35rem;
+    color: var(--mute);
   }
   .walk-nav {
     display: grid;
@@ -177,73 +159,43 @@ const walkUrl = walkPathAt(exhibition, work);
     background: none;
     text-align: left;
     cursor: pointer;
-    color: var(--charcoal);
+    color: var(--ink);
   }
   .nav-next {
     text-align: right;
   }
   .nav-title {
     font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-variation-settings: 'opsz' 24, 'SOFT' 30;
+    font-weight: 700;
+    font-size: 0.95rem;
   }
   .nav-btn:disabled,
   .nav-btn[aria-disabled='true'] {
     cursor: default;
     color: var(--mute);
   }
-
   .detail--page {
-    padding-top: var(--header-h);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
   }
-  .detail--panel {
-    height: 100svh;
-    min-height: 0;
-  }
-  .detail--panel .panel {
-    overflow-y: auto;
-    height: 100svh;
-  }
-  .detail--panel .stage {
-    height: 100svh;
-  }
-
   @media (max-width: 899px) {
     .detail {
       grid-template-columns: 1fr;
     }
-    .detail--panel {
-      height: auto;
-      min-height: 100svh;
-      overflow-y: auto;
-    }
-    .detail--panel .panel,
-    .detail--panel .stage {
-      height: auto;
-      overflow: visible;
-    }
     .stage {
-      min-height: 58svh;
-      padding: calc(var(--header-h) + 0.5rem) 1.25rem 1.5rem;
-    }
-    .detail--page .stage {
-      padding-top: 1.25rem;
+      padding: 1.5rem 1.5rem 1.25rem;
     }
     .stage-inner {
-      width: min(100%, calc(52svh * (var(--ratio))));
-    }
-    .panel {
-      border-left: 0;
-      border-top: 1px solid var(--line);
-      padding-bottom: 3.5rem;
+      width: min(60vw, calc(34svh * (var(--ratio))));
     }
     .detail--panel .panel-head {
       position: sticky;
       top: 0;
       z-index: 2;
-      margin: -1.5rem calc(-1 * clamp(1.25rem, 3vw, 2.25rem)) 0;
+      margin: -1.25rem calc(-1 * clamp(1.25rem, 3vw, 2.25rem)) 0;
       padding: 0.75rem clamp(1.25rem, 3vw, 2.25rem);
-      background: var(--ivory);
+      background: var(--ground);
     }
   }
 </style>

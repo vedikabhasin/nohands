@@ -110,7 +110,7 @@ function withReference(link: string | null, variant: string): string | null {
       <span class="total-label" data-total-label></span>
       <strong class="total-price" data-total-price></strong>
     </p>
-    <a class="btn btn-primary buy" data-buy href="#" aria-disabled="true" rel="noopener">Buy</a>
+    <a class="pill pill-primary buy" data-buy href="#" aria-disabled="true" rel="noopener">Buy</a>
     <p class="pending muted" data-pending hidden>Checkout for this option is being set up.</p>
   </div>
 </form>
@@ -201,30 +201,37 @@ function withReference(link: string | null, variant: string): string | null {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 0.9rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid var(--line);
-    background: var(--paper);
+    padding: 0.85rem 1.1rem;
+    border: 1.5px solid transparent;
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     cursor: pointer;
-    transition: border-color 200ms var(--ease), background-color 200ms var(--ease);
+    transition: border-color 200ms var(--ease), transform 180ms var(--spring), box-shadow 220ms var(--ease);
   }
   .opt:hover {
-    border-color: rgba(31, 29, 26, 0.4);
+    box-shadow: var(--shadow-lift);
+  }
+  .opt:active {
+    transform: scale(0.985);
   }
   .opt:has(input:checked) {
-    border-color: var(--charcoal);
+    border-color: var(--ink);
   }
   .opt:has(input:disabled),
   .opt.is-sold {
     cursor: default;
     color: var(--mute);
     background: transparent;
+    box-shadow: none;
+    border-color: var(--line);
   }
   .opt input {
     appearance: none;
     width: 1rem;
     height: 1rem;
     margin: 0;
-    border: 1px solid var(--charcoal);
+    border: 1px solid var(--ink);
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -234,7 +241,7 @@ function withReference(link: string | null, variant: string): string | null {
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: var(--charcoal);
+    background: var(--ink);
     transform: scale(0);
     transition: transform 150ms var(--ease);
   }
@@ -257,7 +264,7 @@ function withReference(link: string | null, variant: string): string | null {
   }
   .opt-title {
     font-size: 0.95rem;
-    color: var(--charcoal);
+    color: var(--ink);
   }
   .is-sold .opt-title,
   .opt:has(input:disabled) .opt-title {
@@ -301,8 +308,8 @@ function withReference(link: string | null, variant: string): string | null {
   .total-price {
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 400;
-    color: var(--charcoal);
+    font-weight: 700;
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
   .buy {
