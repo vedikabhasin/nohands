@@ -41,6 +41,8 @@ export interface Work {
   stripeOriginal: string | null;
   series: string | null;
   resolutionFlag: string | null;
+  /** 'gold' fills the one-of-a-kind star with the gilt finish. */
+  badge: 'gold' | null;
   /** The artwork image (never a room mockup). */
   image: ImageMetadata;
   imageFile: string;
@@ -130,6 +132,7 @@ function buildWork(raw: RawWork, index: number, wall: number): Work {
     stripeOriginal: raw.stripe.original ?? null,
     series: 'series' in raw ? ((raw as { series?: string }).series ?? null) : null,
     resolutionFlag: 'resolution_flag' in raw ? ((raw as { resolution_flag?: string }).resolution_flag ?? null) : null,
+    badge: (raw as { one_of_a_kind_badge?: string }).one_of_a_kind_badge === 'gold' ? 'gold' : null,
     image,
     imageFile: file,
     index,

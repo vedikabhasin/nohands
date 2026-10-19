@@ -1,0 +1,243 @@
+---
+/**
+ * The walk: one continuous corridor built with CSS 3D. Paintings hang along both walls in walk
+ * order, alternating left and right, with Water Droplets first on the left by the door. The
+ * walk script moves a camera along the corridor from scroll position: walk forward, turn to face
+ * a painting so its frame lands 1:1 on screen, hold while the details show, turn back, walk on.
+ * Geometry (corridor size, painting sizes, positions) is computed in JS and written as inline
+ * styles so CSS and camera agree. Reduced motion renders a flat list instead.
+ */
+import FramedPainting from '@/components/FramedPainting.astro';
+import PaintingDetails from '@/components/PaintingDetails.astro';
+import type { Exhibition } from '@/lib/exhibition';
+
+interface Props {
+  exhibition: Exhibition;
+}
+
+const { exhibition } = Astro.props;
+const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 : 1 }));
+const left = stops.filter((s) => s.side === -1);
+const right = stops.filter((s) => s.side === 1);
+---
+
+<div class="walk" data-walk={exhibition.id} data-count={stops.length}>
+  <div class="stage" data-stage>
+    <div class="scene" data-scene aria-hidden="true">
+      <div class="corridor">
+        <div class="ceiling"></div>
+        <div class="floor"></div>
+        <div class="end-wall"></div>
+        <div class="wall wall-l">
+          {left.map(({ work }) => (
+            <div class="hung" data-hung={work.id} data-index={work.index} data-side="-1" data-ratio={work.image.width / work.image.height}>
+              <FramedPainting work={work} eager={work.index < 2} sizes="(min-width: 900px) 40vw, 84vw" />
+            </div>
+          ))}
+        </div>
+        <div class="wall wall-r">
+          {right.map(({ work }) => (
+            <div class="hung" data-hung={work.id} data-index={work.index} data-side="1" data-ratio={work.image.width / work.image.height}>
+              <FramedPainting work={work} eager={work.index < 2} sizes="(min-width: 900px) 40vw, 84vw" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="overlays">
+      {stops.map(({ work }) => (
+        <div class="panel" data-panel={work.id} style="--h: 0;">
+          <div class="panel-details">
+            <h2 class="title">{work.title}</h2>
+            <PaintingDetails work={work} action="dialog" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Reduced motion: the same paintings and facts as a flat list. Images here only load when shown. -->
+  <ol class="static-list" aria-label="Paintings">
+    {stops.map(({ work }) => (
+      <li class="static-item" id={`stop-${work.id}`}>
+        <h2 class="title">{work.title}</h2>
+        <div class="static-frame" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
+          <FramedPainting work={work} sizes="(min-width: 900px) 40vw, 84vw" />
+        </div>
+        <PaintingDetails work={work} action="dialog" />
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .walk {
+    position: relative;
+    /* height is set by the walk script: intro span + stops + one viewport */
+  }
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+    perspective: var(--p, 900px);
+    perspective-origin: 50% 50%;
+    background: var(--ground);
+    isolation: isolate;
+  }
+  .scene {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .corridor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-style: preserve-3d;
+  }
+  .corridor > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+    backface-visibility: hidden;
+  }
+  .wall {
+    width: var(--cl);
+    height: calc(var(--ch) * 2);
+    transform-style: preserve-3d;
+    background:
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 38%, rgba(20, 20, 19, 0.05)),
+      var(--surface);
+    box-shadow: inset 0 -1px 0 rgba(20, 20, 19, 0.08);
+  }
+  .wall-l {
+    transform: translate3d(-50%, -50%, 0) translate3d(calc(-1 * var(--cw)), 0, calc(-0.5 * var(--cl))) rotateY(90deg);
+  }
+  .wall-r {
+    transform: translate3d(-50%, -50%, 0) translate3d(var(--cw), 0, calc(-0.5 * var(--cl))) rotateY(-90deg);
+  }
+  .hung {
+    position: absolute;
+    top: 50%;
+    width: var(--pw);
+    transform: translate(-50%, -50%);
+  }
+  .floor {
+    width: calc(var(--cw) * 2);
+    height: var(--cl);
+    transform: translate3d(-50%, -50%, 0) translate3d(0, var(--ch), calc(-0.5 * var(--cl))) rotateX(90deg);
+    background:
+      repeating-linear-gradient(to top, rgba(20, 20, 19, 0.035) 0 1px, rgba(20, 20, 19, 0) 1px var(--spacing)),
+      linear-gradient(to top, var(--ground-deep), var(--ground-low));
+  }
+  .ceiling {
+    width: calc(var(--cw) * 2);
+    height: var(--cl);
+    transform: translate3d(-50%, -50%, 0) translate3d(0, calc(-1 * var(--ch)), calc(-0.5 * var(--cl))) rotateX(-90deg);
+    background:
+      radial-gradient(40% 18% at 50% 50%, #fffdf4 0%, #fff6dc 45%, rgba(255, 246, 220, 0) 100%) 0 0 / 100% var(--spacing) repeat-y,
+      linear-gradient(to top, #f8f7f4, #f0eee9);
+  }
+  .end-wall {
+    width: calc(var(--cw) * 2);
+    height: calc(var(--ch) * 2);
+    transform: translate3d(-50%, -50%, 0) translate3d(0, 0, calc(-1 * var(--cl)));
+    background: radial-gradient(60% 50% at 50% 30%, #ffffff, var(--surface) 70%);
+  }
+
+  /* 2D overlays: one panel per painting, shown while the camera holds on it. */
+  .overlays {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .panel {
+    position: absolute;
+    inset: 0;
+    opacity: var(--h);
+    pointer-events: none;
+  }
+  .panel.is-view {
+    pointer-events: none;
+  }
+  .panel.is-view .panel-details {
+    pointer-events: auto;
+  }
+  .title {
+    margin: 0 0 0.6rem;
+    font-size: 1.05rem;
+    letter-spacing: 0;
+    text-align: center;
+  }
+  .panel-details {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    padding: 0 1.25rem;
+    transform: translate3d(0, calc((1 - var(--h)) * 18px), 0);
+  }
+
+  @media (min-width: 900px) {
+    .title {
+      font-size: 1.35rem;
+      text-align: left;
+      margin-bottom: 0.9rem;
+    }
+    .panel-details {
+      left: auto;
+      right: clamp(2rem, 7vw, 8rem);
+      bottom: auto;
+      top: 50%;
+      width: min(30rem, 38vw);
+      padding: 0;
+      transform: translate3d(calc((1 - var(--h)) * 16px), -50%, 0);
+    }
+    .panel-details :global(.details) {
+      justify-items: start;
+      text-align: left;
+    }
+    .panel-details :global(.facts li) {
+      justify-content: flex-start;
+    }
+  }
+
+  .static-list {
+    display: none;
+    margin: 0;
+    padding: calc(var(--header-h) + 1rem) 1.25rem 3rem;
+    list-style: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stage {
+      display: none;
+    }
+    .walk {
+      height: auto !important;
+    }
+    .static-list {
+      display: grid;
+      gap: 4rem;
+    }
+    .static-item {
+      display: grid;
+      gap: 1.25rem;
+      justify-items: center;
+      scroll-margin-top: var(--header-h);
+    }
+    .static-item .title {
+      margin: 0;
+    }
+    .static-frame {
+      width: min(84vw, calc(50svh * (var(--ratio))), 36rem);
+      margin-top: 4rem;
+    }
+  }
+</style>

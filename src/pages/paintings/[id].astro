@@ -1,9 +1,11 @@
 ---
 /**
- * Direct, indexable page for one painting: the painting view, then the purchase section.
+ * Direct, indexable page for one painting: the framed painting with its facts, then the
+ * purchase section, then a way into the walk at this painting.
  */
 import Base from '@/layouts/Base.astro';
-import Stop from '@/components/Stop.astro';
+import FramedPainting from '@/components/FramedPainting.astro';
+import PaintingDetails from '@/components/PaintingDetails.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
 import { getExhibitions, inches, siteTagline, paintingPageTitle, paintingPath, walkPathAt, usd, priceFrom } from '@/lib/exhibition';
 
@@ -22,7 +24,15 @@ const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}
 ---
 
 <Base title={paintingPageTitle(work)} description={description} canonical={paintingPath(work)}>
-  <Stop work={work} exhibition={exhibition} static buyHref="#buy" />
+  <section class="painting">
+    <div class="frame-wrap" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
+      <FramedPainting work={work} eager sizes="(min-width: 900px) 40vw, 84vw" />
+    </div>
+    <div class="facts details--left">
+      <h1 class="title">{work.title}</h1>
+      <PaintingDetails work={work} action="link" href="#buy" />
+    </div>
+  </section>
   <section class="buy-section" id="buy">
     <WorkDetail work={work} exhibition={exhibition} mode="page" />
     <p class="enter">
@@ -32,6 +42,47 @@ const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}
 </Base>
 
 <style>
+  .painting {
+    display: grid;
+    gap: 1.5rem;
+    justify-items: center;
+    min-height: 100svh;
+    padding: calc(var(--header-h) + 1rem) 1.25rem 3rem;
+  }
+  .title {
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+  .frame-wrap {
+    width: min(84vw, calc(42svh * (var(--ratio))));
+    margin-top: 3.5rem;
+  }
+  .facts {
+    display: grid;
+    gap: 0.5rem;
+    justify-items: center;
+  }
+  @media (min-width: 900px) {
+    .painting {
+      grid-template-columns: 1fr minmax(0, 30rem);
+      align-items: center;
+      gap: clamp(2rem, 6vw, 6rem);
+      padding-inline: clamp(2rem, 7vw, 8rem);
+    }
+    .frame-wrap {
+      width: min(40vw, calc(60svh * (var(--ratio))));
+      margin: 0;
+      justify-self: center;
+    }
+    .facts {
+      justify-items: start;
+    }
+    .title {
+      font-size: 1.35rem;
+      text-align: left;
+    }
+  }
   .buy-section {
     display: grid;
     gap: 1.5rem;

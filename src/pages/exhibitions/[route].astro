@@ -1,11 +1,10 @@
 ---
 /**
- * The gallery walk: one stop per painting in walk order. Every painting's purchase sheet is
- * pre-rendered in a <dialog> so buying never leaves the page or loses the visitor's place.
+ * The gallery walk. Every painting's purchase sheet is pre-rendered in a <dialog> so buying
+ * never leaves the page or loses the visitor's place.
  */
 import Base from '@/layouts/Base.astro';
-import Intro from '@/components/Intro.astro';
-import Stop from '@/components/Stop.astro';
+import Gallery from '@/components/Gallery.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
 import { getExhibitions, siteTagline, exhibitionPath, usd, priceFrom } from '@/lib/exhibition';
 
@@ -14,14 +13,13 @@ export function getStaticPaths() {
 }
 
 const { exhibition } = Astro.props;
-const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.length} original paintings on paper, shown one at a time as a walk through the gallery. Originals and fine art reproductions from ${usd(Math.min(...exhibition.works.map(priceFrom)))}.`;
+const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.length} original paintings on paper, walked one at a time. Originals and fine art reproductions from ${usd(Math.min(...exhibition.works.map(priceFrom)))}.`;
 ---
 
 <Base title={`${exhibition.title} | ${siteTagline}`} description={description} canonical={exhibitionPath(exhibition)} bodyClass="is-walk">
-    <div class="walk" data-walk={exhibition.id}>
-    <Intro exhibition={exhibition} />
-    {exhibition.works.map((work) => <Stop work={work} exhibition={exhibition} />)}
-  </div>
+  <h1 class="visually-hidden">{exhibition.title}</h1>
+
+  <Gallery exhibition={exhibition} />
 
   <p class="indicator chip" aria-live="polite" data-indicator hidden>
     <span data-stop-current>1</span>&nbsp;/&nbsp;{exhibition.works.length}
@@ -29,7 +27,7 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
 
   {
     exhibition.works.map((work) => (
-      <dialog class="sheet" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={`Buy ${work.title}`}>
+      <dialog class="sheet" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={`${work.title}: source the original or order a reproduction`}>
         <WorkDetail work={work} exhibition={exhibition} mode="panel" />
       </dialog>
     ))
@@ -42,14 +40,6 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
 </Base>
 
 <style>
-  :global(html:has(body.is-walk)) {
-    scroll-snap-type: y proximity;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    :global(html:has(body.is-walk)) {
-      scroll-snap-type: none;
-    }
-  }
   .indicator[hidden] {
     display: none;
   }
@@ -88,12 +78,12 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
   }
   @media (prefers-reduced-motion: no-preference) {
     .sheet[open] {
-      animation: sheet-in 360ms var(--ease);
+      animation: sheet-in 420ms var(--ease);
     }
     @keyframes sheet-in {
       from {
         opacity: 0;
-        transform: translateY(24px) scale(0.985);
+        transform: translateY(28px);
       }
       to {
         opacity: 1;

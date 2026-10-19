@@ -38,12 +38,14 @@ artwork. Square is never read at runtime.
 
 ## The walk
 
-`src/components/Intro.astro` is the gallery entrance: a CSS corridor with the exhibition's paintings hung along both
-walls and an arch the visitor scrolls through. `src/components/FramedPainting.astro` is the gilt frame with pin, wire
-and price tag. `src/components/Stop.astro` is one painting. Each stop is a tall section with a sticky stage; the walk script
-(`src/scripts/walk.ts`) turns scroll progress into `--zoom` (wall view to painting view and back) and `--view`
-(details on or off). Everything animated is `transform` or `opacity`, on two curves only: easeOutExpo (`--ease`) and easeOutBack (`--ease-back`) for small accents. Pointer and device tilt move the painting
-plane and its shadow. Reduced motion renders each stop as a static painting view.
+`src/components/Gallery.astro` is one continuous corridor built with CSS 3D: paintings hang along both walls in walk
+order, alternating left and right. `src/scripts/walk.ts` turns scroll position into a camera path: walk forward, turn
+to face a painting so its frame lands 1:1, hold while the facts show, turn back, walk on. The scene receives one
+transform per frame; nothing paints on scroll. `src/components/FramedPainting.astro` is the gilt frame with pin, wire
+and price tag; `src/components/PaintingDetails.astro` is the facts block (gilt star for works flagged
+`one_of_a_kind_badge: "gold"`). Reduced motion renders the paintings as a flat list.
+
+Easing uses two curves only: easeOutExpo (`--ease`) and easeOutBack (`--ease-back`) for small accents.
 
 ## Routes
 

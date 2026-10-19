@@ -1,0 +1,111 @@
+---
+/**
+ * The facts under a painting: one-of-a-kind line (gilt star for selected works), reproduction
+ * line, medium, dimensions, and the single action. Used by the walk overlays and /paintings/{id}.
+ */
+import { centimetres, inches, printFrom, usd, type Work } from '@/lib/exhibition';
+
+interface Props {
+  work: Work;
+  /** 'dialog' renders a button that opens the purchase sheet; 'link' renders an anchor. */
+  action: 'dialog' | 'link';
+  href?: string;
+}
+
+const { work, action, href = '#buy' } = Astro.props;
+const sold = work.status === 'sold';
+const from = printFrom(work);
+const label = sold ? 'Reproduce' : 'Source';
+const gradId = `gilt-${work.id}`;
+---
+
+<div class="details">
+  <ul class="facts">
+    <li>
+      <svg class:list={['star', { 'star--gold': work.badge === 'gold' }]} width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#fff0b8" />
+            <stop offset="0.35" stop-color="#d9a53a" />
+            <stop offset="0.6" stop-color="#fbe49a" />
+            <stop offset="1" stop-color="#b98320" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7L5.8 21l1.6-7L2 9.3l7.1-.7z"
+          fill={work.badge === 'gold' ? `url(#${gradId})` : 'none'}
+          stroke={work.badge === 'gold' ? '#9a6d14' : 'currentColor'}
+          stroke-width={work.badge === 'gold' ? '0.8' : '1.6'}
+          stroke-linejoin="round"
+        />
+      </svg>
+      {sold ? <span>One-of-a-kind original · sold at {usd(work.soldAt ?? work.originalPrice)}</span> : <span>One-of-a-kind original · {usd(work.originalPrice)}</span>}
+    </li>
+    {from !== null && (
+      <li>
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 16l3-4 2 2.5 2-3 3 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Fine art reproduction from {usd(from)}</span>
+      </li>
+    )}
+  </ul>
+  <p class="medium">{work.medium}</p>
+  <p class="dims">{inches(work.originalSize)} <span aria-hidden="true">|</span> {centimetres(work.originalSize)}</p>
+  {
+    action === 'link' ? (
+      <a class="pill pill-primary buy" href={href}>{label}</a>
+    ) : (
+      <button class="pill pill-primary buy" type="button" data-open={work.id} aria-haspopup="dialog">{label}</button>
+    )
+  }
+</div>
+
+<style>
+  .details {
+    display: grid;
+    gap: 0.45rem;
+    justify-items: center;
+    text-align: center;
+  }
+  .facts {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.84rem;
+    color: var(--ink);
+  }
+  .facts li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .star--gold {
+    filter: drop-shadow(0 1px 1px rgba(90, 60, 10, 0.35));
+  }
+  .medium {
+    margin-top: 0.3rem;
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+  }
+  .dims {
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+  }
+  .dims span {
+    margin: 0 0.4rem;
+    color: var(--mute);
+  }
+  .buy {
+    margin-top: 0.6rem;
+    min-width: 13rem;
+  }
+  :global(.details--left) .details {
+    justify-items: start;
+    text-align: left;
+  }
+  :global(.details--left) .facts li {
+    justify-content: flex-start;
+  }
+</style>

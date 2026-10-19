@@ -1,141 +1,206 @@
 /**
- * Client behaviour for the gallery walk.
- * Each stop is a tall section with a sticky stage. Scroll progress through the stop drives
- * --zoom (wall view to painting view and back) and --view (details on or off). Both are set as
- * CSS variables; every animated property is transform or opacity, so nothing paints on scroll.
- * Also: pointer and device tilt on the painting plane, the purchase sheet, Previous/Next,
- * the ?at={work} deep link, and the position indicator. Analytics hooks dispatch DOM events.
+ * Camera for the gallery walk.
+ * Scroll position drives a camera through the corridor: walk forward, turn to a painting, hold,
+ * turn back, walk on. The scene receives one transform per frame; overlays receive an opacity
+ * variable. Pointer or device tilt adds a small look-around. Geometry is computed here and
+ * written as inline styles so the CSS corridor and the camera agree.
  */
-export function initWalk() {
-  const walk = document.querySelector<HTMLElement>('[data-walk]');
-  if (!walk) return;
+type Stop = { id: string; index: number; side: number; ratio: number; el: HTMLElement; panel: HTMLElement | null };
 
-  const stops = Array.from(walk.querySelectorAll<HTMLElement>('section[data-stop]'));
-  const order = stops.map((s) => s.dataset.stop!);
-  const intro = walk.querySelector<HTMLElement>('[data-intro]');
-  const indicator = document.querySelector<HTMLElement>('[data-stop-current]');
-  const indicatorWrap = document.querySelector<HTMLElement>('[data-indicator]');
+export function initWalk() {
+  const walkEl = document.querySelector<HTMLElement>('[data-walk]');
+  if (!walkEl) return;
+  const walk: HTMLElement = walkEl;
+  const stage = walk.querySelector<HTMLElement>('[data-stage]')!;
+  const scene = walk.querySelector<HTMLElement>('[data-scene]')!;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const indicator = document.querySelector<HTMLElement>('[data-stop-current]');
+  const indicatorWrap = document.querySelector<HTMLElement>('[data-indicator]');
 
-  const smooth = (p: number, a: number, b: number) => {
-    const t = Math.max(0, Math.min(1, (p - a) / (b - a)));
-    return t * t * (3 - 2 * t);
+  const stops: Stop[] = Array.from(walk.querySelectorAll<HTMLElement>('[data-hung]'))
+    .map((el) => ({
+      id: el.dataset.hung!,
+      index: Number(el.dataset.index),
+      side: Number(el.dataset.side),
+      ratio: Number(el.dataset.ratio),
+      el,
+      panel: walk.querySelector<HTMLElement>(`[data-panel="${CSS.escape(el.dataset.hung!)}"]`),
+    }))
+    .sort((a, b) => a.index - b.index);
+  const order = stops.map((s) => s.id);
+  const n = stops.length;
+
+  // --- Geometry ----------------------------------------------------------------------------
+  let G = geometry();
+  function geometry() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const mobile = vw < 900;
+    const A = mobile ? 420 : 560; // half the distance between paintings, also the approach length
+    const E = A * 0.7; // corridor behind the first approach, so walls surround the visitor at the door
+    const D0 = mobile ? A * 0.1 : A * 0.2; // the short walk from the door to the first approach
+    const CW = mobile ? vw * 0.6 : Math.min(vw * 0.46, 520);
+    const CH = mobile ? vh * 0.75 : Math.min(vh * 0.52, 520);
+    const CL = E + A + n * 2 * A + A;
+    return {
+      vw,
+      vh,
+      mobile,
+      P: mobile ? 800 : 1100,
+      A,
+      E,
+      D0,
+      CW,
+      CH,
+      CL,
+      S: mobile ? 0 : vw * 0.2, // painting sits left of centre on desktop
+      Y: mobile ? vh * 0.12 : 0, // painting sits high on mobile
+      introSpan: vh * 0.5,
+      stopSpan: vh * 2.4,
+      pw: (ratio: number) => (mobile ? Math.min(vw * 0.68, vh * 0.44 * ratio) : Math.min(vw * 0.42, vh * 0.62 * ratio)),
+      z: (i: number) => -(E + A + i * 2 * A),
+    };
+  }
+
+  function layout() {
+    G = geometry();
+    walk.style.setProperty('--p', `${G.P}px`);
+    walk.style.setProperty('--cw', `${G.CW}px`);
+    walk.style.setProperty('--ch', `${G.CH}px`);
+    walk.style.setProperty('--cl', `${G.CL}px`);
+    walk.style.setProperty('--spacing', `${2 * G.A}px`);
+    walk.style.height = `${G.introSpan + n * G.stopSpan + G.vh}px`;
+    for (const s of stops) {
+      const depth = -G.z(s.index);
+      s.el.style.left = `${s.side < 0 ? depth : G.CL - depth}px`;
+      s.el.style.setProperty('--pw', `${G.pw(s.ratio)}px`);
+    }
+  }
+
+  // --- Camera -------------------------------------------------------------------------------
+  const smooth = (t: number) => {
+    const x = Math.max(0, Math.min(1, t));
+    return x * x * (3 - 2 * x);
   };
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-  // --- Scroll choreography ---------------------------------------------------------------
+  let tiltX = 0;
+  let tiltY = 0;
   let current = -1;
+  let lastScrolled = -1;
+
   const setCurrent = (i: number) => {
     if (i === current) return;
     current = i;
     if (indicatorWrap) indicatorWrap.hidden = i < 0;
-    if (i < 0) return;
-    if (indicator) indicator.textContent = String(i + 1);
-    track('wall_view', { wall: Number(stops[i].dataset.wall), work: order[i] });
+    if (i >= 0) {
+      if (indicator) indicator.textContent = String(i + 1);
+      track('wall_view', { work: order[i] });
+    }
   };
 
-  if (reduced) {
-    intro?.style.setProperty('--walk', '0');
-    intro?.classList.add('is-copy');
-    stops.forEach((s) => {
-      s.style.setProperty('--zoom', '1');
-      s.style.setProperty('--view', '1');
-      s.classList.add('is-view');
-    });
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setCurrent(stops.indexOf(e.target as HTMLElement))),
-      { threshold: 0.5 },
-    );
-    stops.forEach((s) => io.observe(s));
-  } else {
-    let ticking = false;
-    const update = () => {
-      ticking = false;
-      const vh = window.innerHeight;
-      let best = -1;
-      let bestDist = Infinity;
-      if (intro) {
-        const r = intro.getBoundingClientRect();
-        const travel = r.height - vh;
-        const w = travel > 0 ? Math.max(0, Math.min(1, -r.top / travel)) : 1;
-        intro.style.setProperty('--walk', w.toFixed(4));
-        intro.classList.toggle('is-copy', w < 0.3);
+  function render(scrolled: number) {
+    let cx = 0;
+    let cy = 0;
+    let cz = 0;
+    let phi = 0;
+    let active = -1;
+    let hold = 0;
+
+    const start = G.z(0) + G.A + G.D0; // camera position at the door
+    if (scrolled < G.introSpan) {
+      const t = smooth(scrolled / G.introSpan);
+      cz = lerp(start, G.z(0) + G.A, t);
+    } else {
+      const i = Math.min(n - 1, Math.floor((scrolled - G.introSpan) / G.stopSpan));
+      const u = Math.max(0, Math.min(1, (scrolled - G.introSpan - i * G.stopSpan) / G.stopSpan));
+      const s = stops[i];
+      const zi = G.z(i);
+      const holdX = s.side * G.CW; // stand at the wall so the frame renders 1:1
+      const holdZ = zi + s.side * G.S;
+      const holdPhi = s.side * 90;
+      if (u < 0.35) {
+        const a = smooth(u / 0.35);
+        cx = lerp(0, holdX, a);
+        cy = lerp(0, G.Y, a);
+        cz = lerp(zi + G.A, holdZ, a);
+        phi = lerp(0, holdPhi, a);
+      } else if (u < 0.65) {
+        cx = holdX;
+        cy = G.Y;
+        cz = holdZ;
+        phi = holdPhi;
+      } else {
+        const b = smooth((u - 0.65) / 0.35);
+        cx = lerp(holdX, 0, b);
+        cy = lerp(G.Y, 0, b);
+        cz = lerp(holdZ, zi - G.A, b);
+        phi = lerp(holdPhi, 0, b);
       }
-      for (const [i, stop] of stops.entries()) {
-        const r = stop.getBoundingClientRect();
-        if (r.bottom < -vh || r.top > 2 * vh) continue;
-        const travel = r.height - vh;
-        const p = travel > 0 ? Math.max(0, Math.min(1, -r.top / travel)) : 0.5;
-        const zoom = smooth(p, 0, 0.34) - smooth(p, 0.66, 1);
-        const view = smooth(p, 0.24, 0.4) - smooth(p, 0.6, 0.76);
-        stop.style.setProperty('--zoom', zoom.toFixed(4));
-        stop.style.setProperty('--view', view.toFixed(4));
-        stop.classList.toggle('is-view', view > 0.55);
-        const dist = Math.abs(r.top + Math.min(r.height, vh) / 2 - vh / 2);
-        if (r.top <= vh / 2 && r.bottom >= vh / 2 && dist < bestDist) {
-          best = i;
-          bestDist = dist;
-        }
-      }
-      setCurrent(best);
-    };
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    update();
+      active = i;
+      hold = smooth((u - 0.28) / 0.12) - smooth((u - 0.6) / 0.12);
+    }
+
+    scene.style.transform = `rotateX(${tiltX.toFixed(3)}deg) rotateY(${(phi + tiltY).toFixed(3)}deg) translate3d(${(-cx).toFixed(2)}px, ${(-cy).toFixed(2)}px, ${(-cz).toFixed(2)}px)`;
+
+    for (const s of stops) {
+      const h = s.index === active ? hold : 0;
+      if (!s.panel) continue;
+      s.panel.style.setProperty('--h', h.toFixed(3));
+      s.panel.classList.toggle('is-view', h > 0.5);
+    }
+    setCurrent(active);
   }
 
-  // --- Tilt: pointer on desktop, device orientation on mobile ----------------------------
-  const setTilt = (el: HTMLElement, tx: number, ty: number) => {
-    el.style.setProperty('--tx', tx.toFixed(3));
-    el.style.setProperty('--ty', ty.toFixed(3));
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      lastScrolled = -walk.getBoundingClientRect().top;
+      render(lastScrolled);
+    });
   };
-  const clamp = (v: number) => Math.max(-1, Math.min(1, v));
 
+  // --- Tilt ---------------------------------------------------------------------------------
+  const clamp = (v: number) => Math.max(-1, Math.min(1, v));
   if (!reduced && finePointer) {
     let raf = 0;
-    let px = 0;
-    let py = 0;
-    const apply = () => {
-      raf = 0;
-      for (const stop of stops) {
-        const art = stop.querySelector<HTMLElement>('.plane');
-        if (!art) continue;
-        const r = art.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > window.innerHeight) continue;
-        const dx = (px - (r.left + r.width / 2)) / (r.width * 1.5);
-        const dy = (py - (r.top + r.height / 2)) / (r.height * 1.5);
-        const falloff = Math.max(0, 1 - Math.max(0, Math.hypot(dx, dy) - 0.6));
-        setTilt(stop, clamp(dx) * falloff, clamp(dy) * falloff);
-      }
-    };
-    walk.addEventListener(
+    stage.addEventListener(
       'pointermove',
       (e) => {
-        px = e.clientX;
-        py = e.clientY;
-        if (!raf) raf = requestAnimationFrame(apply);
+        const x = (e.clientX / G.vw) * 2 - 1;
+        const y = (e.clientY / G.vh) * 2 - 1;
+        if (!raf)
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            tiltY = x * 1.6;
+            tiltX = -y * 1.1;
+            render(lastScrolled);
+          });
       },
       { passive: true },
     );
-    walk.addEventListener('pointerleave', () => stops.forEach((s) => setTilt(s, 0, 0)));
+    stage.addEventListener('pointerleave', () => {
+      tiltX = 0;
+      tiltY = 0;
+      render(lastScrolled);
+    });
   } else if (!reduced && 'DeviceOrientationEvent' in window) {
     let raf = 0;
-    let gx = 0;
-    let gy = 0;
-    const apply = () => {
-      raf = 0;
-      stops.forEach((s) => setTilt(s, gx, gy));
-    };
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.gamma == null || e.beta == null) return;
-      gx = clamp(e.gamma / 20);
-      gy = clamp((e.beta - 40) / 25);
-      if (!raf) raf = requestAnimationFrame(apply);
+      const gx = clamp(e.gamma / 25);
+      const gy = clamp((e.beta - 45) / 30);
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          tiltY = gx * 2;
+          tiltX = -gy * 1.4;
+          render(lastScrolled);
+        });
     };
     const start = () => window.addEventListener('deviceorientation', onOrient, { passive: true });
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
@@ -156,9 +221,13 @@ export function initWalk() {
   const dialogFor = (id: string) => document.querySelector<HTMLDialogElement>(`[data-dialog="${CSS.escape(id)}"]`);
 
   function scrollToStop(id: string, behavior: ScrollBehavior) {
-    const stop = document.getElementById(`stop-${id}`);
-    if (!stop) return;
-    const top = stop.offsetTop + (stop.offsetHeight - window.innerHeight) / 2;
+    const i = order.indexOf(id);
+    if (i < 0) return;
+    if (reduced) {
+      document.getElementById(`stop-${id}`)?.scrollIntoView({ block: 'start', behavior });
+      return;
+    }
+    const top = walk.offsetTop + G.introSpan + i * G.stopSpan + G.stopSpan * 0.5;
     window.scrollTo({ top, behavior });
   }
 
@@ -173,8 +242,8 @@ export function initWalk() {
     const dialog = dialogFor(id);
     if (!dialog) return;
     if (trigger) lastTrigger = trigger;
-    const open = document.querySelector<HTMLDialogElement>('dialog[open]');
-    if (open && open !== dialog) open.close('switch');
+    const openDialog = document.querySelector<HTMLDialogElement>('dialog[open]');
+    if (openDialog && openDialog !== dialog) openDialog.close('switch');
     dialog.showModal();
     dialog.scrollTop = 0;
     dialog.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
@@ -184,35 +253,10 @@ export function initWalk() {
   }
 
   walk.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-start]') && order[0]) {
-      scrollToStop(order[0], reduced ? ('instant' as ScrollBehavior) : 'smooth');
-      return;
-    }
-    const btn = target.closest<HTMLElement>('[data-open]');
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-open]');
     if (!btn) return;
     open(btn.dataset.open!, 'walk', btn);
   });
-
-  if (intro && !reduced && finePointer) {
-    let raf = 0;
-    let x = 0;
-    let y = 0;
-    intro.addEventListener(
-      'pointermove',
-      (e) => {
-        x = (e.clientX / window.innerWidth) * 2 - 1;
-        y = (e.clientY / window.innerHeight) * 2 - 1;
-        if (!raf)
-          raf = requestAnimationFrame(() => {
-            raf = 0;
-            intro.style.setProperty('--px', x.toFixed(3));
-            intro.style.setProperty('--py', y.toFixed(3));
-          });
-      },
-      { passive: true },
-    );
-  }
 
   document.querySelectorAll<HTMLDialogElement>('dialog[data-dialog]').forEach((dialog) => {
     dialog.addEventListener('click', (e) => {
@@ -244,9 +288,28 @@ export function initWalk() {
     if (e.key === 'ArrowLeft' && order[i - 1]) open(order[i - 1], 'nav');
   });
 
-  // Deep link: ?at={work} lands in that painting's view.
+  // --- Boot ---------------------------------------------------------------------------------
+  if (!reduced) {
+    layout();
+    window.addEventListener('resize', () => {
+      layout();
+      onScroll();
+    });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  } else if (indicatorWrap) {
+    indicatorWrap.hidden = true;
+  }
+
   const at = new URL(location.href).searchParams.get('at');
   if (at && order.includes(at)) scrollToStop(at, 'instant' as ScrollBehavior);
+
+  // Test hook: seek to stop i at progress u (0 wall, 0.5 hold, 1 leaving).
+  (window as unknown as { nohandsWalk: unknown }).nohandsWalk = {
+    seek(i: number, u: number) {
+      window.scrollTo(0, walk.offsetTop + (i < 0 ? G.introSpan * u : G.introSpan + i * G.stopSpan + u * G.stopSpan));
+    },
+  };
 
   track('exhibition_view', { exhibition: walk.dataset.walk });
   window.addEventListener('pagehide', () => {

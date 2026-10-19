@@ -26,24 +26,72 @@
       {
         "id": "pop",
         "label": "Pop series",
-        "works": ["bam", "pop", "wham", "slash"],
+        "works": [
+          "bam",
+          "pop",
+          "wham",
+          "slash"
+        ],
         "hang_rule": "Hang the four together on one wall as a single graphic series. Never split them."
       }
     ],
     "wall_title_note": "Provisional. A null wall title falls back to the series label or the titles of the works on it. Vedi sets final titles after the MVP.",
     "walls": [
-      { "wall": 1, "title": null, "works": ["water-droplets"], "note": "Opening wall, single work" },
-      { "wall": 2, "title": null, "works": ["a-still-life", "reflection"], "note": "Still life into portraiture" },
-      { "wall": 3, "title": null, "works": ["bam", "pop", "wham", "slash"], "note": "Pop series, all four together" },
-      { "wall": 4, "title": null, "works": ["color-me-mine"], "note": "Colorful transition" },
-      { "wall": 5, "title": null, "works": ["greek-god", "rhino"], "note": "Monochrome close, Rhino last" }
+      {
+        "wall": 1,
+        "title": null,
+        "works": [
+          "water-droplets"
+        ],
+        "note": "Opening wall, single work"
+      },
+      {
+        "wall": 2,
+        "title": null,
+        "works": [
+          "a-still-life",
+          "reflection"
+        ],
+        "note": "Still life into portraiture"
+      },
+      {
+        "wall": 3,
+        "title": null,
+        "works": [
+          "bam",
+          "pop",
+          "wham",
+          "slash"
+        ],
+        "note": "Pop series, all four together"
+      },
+      {
+        "wall": 4,
+        "title": null,
+        "works": [
+          "color-me-mine"
+        ],
+        "note": "Colorful transition"
+      },
+      {
+        "wall": 5,
+        "title": null,
+        "works": [
+          "greek-god",
+          "rhino"
+        ],
+        "note": "Monochrome close, Rhino last"
+      }
     ],
-    "seo": { "title": null, "description": null }
+    "seo": {
+      "title": null,
+      "description": null
+    }
   },
   "pricing_rules": {
     "currency": "USD",
     "print_sizes_are_temporary": true,
-    "print_size_rule": "Small = 2x original dimensions, Medium = 3x, Large = 4x. Aspect ratio of the original is always preserved. Sizes will be replaced after print resolution tests.",
+    "print_size_rule": "Small = 2x original dimensions, Medium = 3x, Large = 4x. Aspect ratio of the original is always preserved. Exception, the Pop series (bam, pop, wham, slash): Small = 1.5x, Medium = 2x, Large = 3x, because the digital sources are smaller. Sizes will be replaced after print resolution tests.",
     "print_price_rule": "One flat print price per work (print_price_usd) applied to all three sizes for the MVP. A per-size price_usd of null means inherit the flat price. Do not introduce per-size increments without the artist's approval.",
     "print_availability_rule": "Each size carries available (true or false). A size with review_before_sale true may be shown but must be confirmed by the artist before it is sold.",
     "sold_originals": "Still shown in the exhibition, marked Sold, with the price it sold at visible. Prints remain purchasable.",
@@ -57,67 +105,159 @@
       "title": "Water Droplets",
       "description": null,
       "medium": "Acrylic on paper",
-      "original_size_in": { "width": 11, "height": 15 },
+      "original_size_in": {
+        "width": 11,
+        "height": 15
+      },
       "orientation": "portrait",
       "status": "sold",
       "original_price_usd": 13500,
       "sold_at_usd": 13500,
       "print_price_usd": 3790,
       "print_sizes_in": {
-        "small": { "width": 22, "height": 30, "available": true, "price_usd": null },
-        "medium": { "width": 33, "height": 45, "available": true, "price_usd": null },
-        "large": { "width": 44, "height": 60, "available": true, "price_usd": null }
+        "small": {
+          "width": 22,
+          "height": 30,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 33,
+          "height": 45,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 44,
+          "height": 60,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i1_w3284.jpeg", "width_px": 3284 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i2_w2611.png", "width_px": 2611 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i3_w2415.png", "width_px": 2415 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i1_w3284.jpeg",
+          "width_px": 3284
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i2_w2611.png",
+          "width_px": 2611
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p20_i3_w2415.png",
+          "width_px": 2415
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      },
+      "one_of_a_kind_badge": "gold"
     },
     {
       "id": "a-still-life",
       "title": "A Still Life",
       "description": null,
       "medium": "Soft pastel on brown paper",
-      "original_size_in": { "width": 11, "height": 15 },
+      "original_size_in": {
+        "width": 11,
+        "height": 15
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 10370,
       "sold_at_usd": null,
       "print_price_usd": 2100,
       "print_sizes_in": {
-        "small": { "width": 22, "height": 30, "available": true, "price_usd": null },
-        "medium": { "width": 33, "height": 45, "available": true, "price_usd": null },
-        "large": { "width": 44, "height": 60, "available": true, "price_usd": null }
+        "small": {
+          "width": 22,
+          "height": 30,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 33,
+          "height": 45,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 44,
+          "height": 60,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p19_i2_w3200.png", "width_px": 3200 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p19_i1_w2456.jpeg", "width_px": 2456 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p19_i2_w3200.png",
+          "width_px": 3200
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p19_i1_w2456.jpeg",
+          "width_px": 2456
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      }
     },
     {
       "id": "reflection",
       "title": "Reflection",
       "description": null,
       "medium": "Colored pencil, acrylic on paper",
-      "original_size_in": { "width": 8.5, "height": 11 },
+      "original_size_in": {
+        "width": 8.5,
+        "height": 11
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 7300,
       "sold_at_usd": null,
       "print_price_usd": 2300,
       "print_sizes_in": {
-        "small": { "width": 17, "height": 22, "available": true, "price_usd": null },
-        "medium": { "width": 25.5, "height": 33, "available": true, "price_usd": null },
-        "large": { "width": 34, "height": 44, "available": true, "price_usd": null }
+        "small": {
+          "width": 17,
+          "height": 22,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 25.5,
+          "height": 33,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 34,
+          "height": 44,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p17_i1_w3303.jpeg", "width_px": 3303 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p17_i2_w1875.png", "width_px": 1875 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p17_i1_w3303.jpeg",
+          "width_px": 3303
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p17_i2_w1875.png",
+          "width_px": 1875
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      },
+      "one_of_a_kind_badge": "gold"
     },
     {
       "id": "bam",
@@ -126,22 +266,51 @@
       "series": "pop",
       "description": null,
       "medium": "Acrylic on paper",
-      "original_size_in": { "width": 11, "height": 15 },
+      "original_size_in": {
+        "width": 11,
+        "height": 15
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 5300,
       "sold_at_usd": null,
       "print_price_usd": 1670,
       "print_sizes_in": {
-        "small": { "width": 22, "height": 30, "available": true, "price_usd": null },
-        "medium": { "width": 33, "height": 45, "available": true, "price_usd": null },
-        "large": { "width": 44, "height": 60, "available": true, "price_usd": null }
+        "small": {
+          "width": 16.5,
+          "height": 22.5,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 22,
+          "height": 30,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 33,
+          "height": 45,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p1_i2_w3000.png", "width_px": 3000 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p1_i1_w612.png", "width_px": 612 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p1_i2_w3000.png",
+          "width_px": 3000
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p1_i1_w612.png",
+          "width_px": 612
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      }
     },
     {
       "id": "pop",
@@ -150,23 +319,55 @@
       "series": "pop",
       "description": null,
       "medium": "Acrylic on paper",
-      "original_size_in": { "width": 11, "height": 15 },
+      "original_size_in": {
+        "width": 11,
+        "height": 15
+      },
       "orientation": "portrait",
       "status": "sold",
       "original_price_usd": 5300,
       "sold_at_usd": 5300,
       "print_price_usd": 1670,
       "print_sizes_in": {
-        "small": { "width": 22, "height": 30, "available": true, "price_usd": null },
-        "medium": { "width": 33, "height": 45, "available": true, "price_usd": null },
-        "large": { "width": 44, "height": 60, "available": true, "price_usd": null }
+        "small": {
+          "width": 16.5,
+          "height": 22.5,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 22,
+          "height": 30,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 33,
+          "height": 45,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i2_w3776.jpeg", "width_px": 3776 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i3_w3000.png", "width_px": 3000 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i1_w2415.png", "width_px": 2415 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i2_w3776.jpeg",
+          "width_px": 3776
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i3_w3000.png",
+          "width_px": 3000
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p4_i1_w2415.png",
+          "width_px": 2415
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      }
     },
     {
       "id": "wham",
@@ -175,23 +376,53 @@
       "series": "pop",
       "description": null,
       "medium": "Acrylic on paper",
-      "original_size_in": { "width": 13, "height": 10 },
+      "original_size_in": {
+        "width": 13,
+        "height": 10
+      },
       "orientation": "landscape",
       "status": "available",
       "original_price_usd": 5100,
       "sold_at_usd": null,
       "print_price_usd": 1670,
       "print_sizes_in": {
-        "small": { "width": 26, "height": 20, "available": true, "price_usd": null },
-        "medium": { "width": 39, "height": 30, "available": true, "price_usd": null },
-        "large": { "width": 52, "height": 40, "available": true, "price_usd": null, "review_before_sale": true }
+        "small": {
+          "width": 19.5,
+          "height": 15.0,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 26,
+          "height": 20,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 39,
+          "height": 30,
+          "available": true,
+          "price_usd": null,
+          "review_before_sale": true
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p5_i2_w1875.png", "width_px": 1875 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p5_i1_w1260.png", "width_px": 1260 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p5_i2_w1875.png",
+          "width_px": 1875
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p5_i1_w1260.png",
+          "width_px": 1260
+        }
       ],
       "resolution_flag": "Low. 1875px max. Large print needs the original scan before sale.",
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      }
     },
     {
       "id": "slash",
@@ -200,23 +431,53 @@
       "series": "pop",
       "description": null,
       "medium": "Acrylic on paper",
-      "original_size_in": { "width": 10, "height": 13 },
+      "original_size_in": {
+        "width": 10,
+        "height": 13
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 5100,
       "sold_at_usd": null,
       "print_price_usd": 1670,
       "print_sizes_in": {
-        "small": { "width": 20, "height": 26, "available": true, "price_usd": null },
-        "medium": { "width": 30, "height": 39, "available": true, "price_usd": null },
-        "large": { "width": 40, "height": 52, "available": true, "price_usd": null, "review_before_sale": true }
+        "small": {
+          "width": 15.0,
+          "height": 19.5,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 20,
+          "height": 26,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 30,
+          "height": 39,
+          "available": true,
+          "price_usd": null,
+          "review_before_sale": true
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p6_i2_w1875.png", "width_px": 1875 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p6_i1_w613.png", "width_px": 613 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p6_i2_w1875.png",
+          "width_px": 1875
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p6_i1_w613.png",
+          "width_px": 613
+        }
       ],
       "resolution_flag": "Low. 1875px max. Large print needs the original scan before sale.",
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      }
     },
     {
       "id": "color-me-mine",
@@ -224,66 +485,156 @@
       "square_title": "Color Me",
       "description": null,
       "medium": "Pencil, acrylic on paper",
-      "original_size_in": { "width": 8.5, "height": 11 },
+      "original_size_in": {
+        "width": 8.5,
+        "height": 11
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 7370,
       "sold_at_usd": null,
       "print_price_usd": 2300,
       "print_sizes_in": {
-        "small": { "width": 17, "height": 22, "available": true, "price_usd": null },
-        "medium": { "width": 25.5, "height": 33, "available": true, "price_usd": null },
-        "large": { "width": 34, "height": 44, "available": true, "price_usd": null }
+        "small": {
+          "width": 17,
+          "height": 22,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 25.5,
+          "height": 33,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 34,
+          "height": 44,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p11_i1_w5322.jpeg", "width_px": 5322 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p11_i2_w2480.png", "width_px": 2480 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p11_i1_w5322.jpeg",
+          "width_px": 5322
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p11_i2_w2480.png",
+          "width_px": 2480
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      },
+      "one_of_a_kind_badge": "gold"
     },
     {
       "id": "greek-god",
       "title": "Greek God",
       "description": null,
       "medium": "Soft charcoal on paper",
-      "original_size_in": { "width": 11, "height": 16 },
+      "original_size_in": {
+        "width": 11,
+        "height": 16
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 5500,
       "sold_at_usd": null,
       "print_price_usd": 1550,
       "print_sizes_in": {
-        "small": { "width": 22, "height": 32, "available": true, "price_usd": null },
-        "medium": { "width": 33, "height": 48, "available": true, "price_usd": null },
-        "large": { "width": 44, "height": 64, "available": true, "price_usd": null }
+        "small": {
+          "width": 22,
+          "height": 32,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 33,
+          "height": 48,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 44,
+          "height": 64,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p15_i2_w3200.png", "width_px": 3200 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p15_i1_w1167.jpeg", "width_px": 1167 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p15_i2_w3200.png",
+          "width_px": 3200
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p15_i1_w1167.jpeg",
+          "width_px": 1167
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      }
     },
     {
       "id": "rhino",
       "title": "Rhino",
       "description": null,
       "medium": "Pencil, acrylic on paper",
-      "original_size_in": { "width": 11, "height": 15 },
+      "original_size_in": {
+        "width": 11,
+        "height": 15
+      },
       "orientation": "portrait",
       "status": "available",
       "original_price_usd": 7500,
       "sold_at_usd": null,
       "print_price_usd": 2780,
       "print_sizes_in": {
-        "small": { "width": 22, "height": 30, "available": true, "price_usd": null },
-        "medium": { "width": 33, "height": 45, "available": true, "price_usd": null },
-        "large": { "width": 44, "height": 60, "available": true, "price_usd": null }
+        "small": {
+          "width": 22,
+          "height": 30,
+          "available": true,
+          "price_usd": null
+        },
+        "medium": {
+          "width": 33,
+          "height": 45,
+          "available": true,
+          "price_usd": null
+        },
+        "large": {
+          "width": 44,
+          "height": 60,
+          "available": true,
+          "price_usd": null
+        }
       },
       "images": [
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p12_i1_w5076.jpeg", "width_px": 5076 },
-        { "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p12_i2_w2480.png", "width_px": 2480 }
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p12_i1_w5076.jpeg",
+          "width_px": 5076
+        },
+        {
+          "url": "https://www.nomohands.com/uploads/1/5/3/4/153410128/s654929526432840670_p12_i2_w2480.png",
+          "width_px": 2480
+        }
       ],
-      "stripe": { "original": null, "print_small": null, "print_medium": null, "print_large": null }
+      "stripe": {
+        "original": null,
+        "print_small": null,
+        "print_medium": null,
+        "print_large": null
+      },
+      "one_of_a_kind_badge": "gold"
     }
-  ]
+  ],
+  "badge_note": "one_of_a_kind_badge: 'gold' fills the one-of-a-kind star with the gilt finish. Absent means an outline star."
 }

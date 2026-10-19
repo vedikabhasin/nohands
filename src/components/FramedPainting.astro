@@ -175,24 +175,25 @@ const sold = work.status === 'sold';
   }
   .tag-wrap {
     position: absolute;
-    top: calc(-1 * clamp(4px, 1.5cqw, 10px));
-    right: clamp(-10px, -3cqw, -4px);
+    top: 0;
+    right: 0;
     display: grid;
-    justify-items: start;
-    transform-origin: 10% 0;
-    transform: rotate(16deg) scale(var(--tag-scale, 1));
+    justify-items: center;
+    width: 0;
+    transform-origin: 50% 0;
+    transform: rotate(calc(-22deg * var(--tag-swing, 1))) scale(var(--tag-scale, 1));
     opacity: var(--tag-opacity, 1);
     z-index: 2;
   }
   .tag-string {
-    width: 1px;
-    height: clamp(8px, 3cqw, 16px);
-    margin-left: 10px;
-    background: rgba(20, 20, 19, 0.45);
+    width: 1.5px;
+    height: clamp(14px, 6cqw, 30px);
+    background: rgba(20, 20, 19, 0.55);
   }
   .tag {
     position: relative;
     padding: 0.4rem 0.8rem 0.4rem 1rem;
+    transform: translateX(calc(50% - 0.6rem));
     border-radius: 999px;
     background: var(--ink);
     color: #fff;
@@ -205,7 +206,7 @@ const sold = work.status === 'sold';
   .tag::before {
     content: '';
     position: absolute;
-    left: 7px;
+    left: 6px;
     top: 50%;
     width: 3px;
     height: 3px;
@@ -215,5 +216,10 @@ const sold = work.status === 'sold';
   }
   .tag--sold {
     background: var(--accent);
+  }
+  @media (max-width: 899px) {
+    .tag-wrap {
+      right: 10%;
+    }
   }
 </style>

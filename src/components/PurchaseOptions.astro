@@ -77,7 +77,7 @@ function withReference(link: string | null, variant: string): string | null {
     </label>
   </fieldset>
 
-  <fieldset class="group sizes" data-sizes hidden={originalAvailable}>
+  <fieldset class="group sizes" data-sizes disabled={originalAvailable} aria-disabled={originalAvailable ? "true" : undefined}>
     <legend class="eyebrow">Select a size</legend>
     {
       work.prints.map((p) => (
@@ -136,14 +136,17 @@ function withReference(link: string | null, variant: string): string | null {
     const render = () => {
       const kindInput = form.querySelector<HTMLInputElement>('input[value="original"]:checked, input[value="print"]:checked');
       const isPrint = kindInput?.value === 'print';
-      if (sizes) sizes.hidden = !isPrint;
+      if (sizes) {
+        sizes.disabled = !isPrint;
+        sizes.setAttribute('aria-disabled', String(!isPrint));
+      }
       const pick = selected();
       if (!pick) return;
       const price = Number(pick.dataset.price);
       const link = pick.dataset.link || '';
       totalLabel.textContent = pick.dataset.label ?? '';
       totalPrice.textContent = fmt.format(price);
-      buy.textContent = isPrint ? 'Buy reproduction' : 'Buy original';
+      buy.textContent = isPrint ? 'Order reproduction' : 'Source original';
       if (link) {
         buy.href = link;
         buy.removeAttribute('aria-disabled');
@@ -195,6 +198,16 @@ function withReference(link: string | null, variant: string): string | null {
   .group legend {
     margin-bottom: 0.6rem;
     padding: 0;
+  }
+  .group[hidden] {
+    display: none;
+  }
+  .sizes[disabled] {
+    opacity: 0.45;
+  }
+  .sizes[disabled] .opt {
+    cursor: not-allowed;
+    box-shadow: none;
   }
   .opt {
     display: grid;
