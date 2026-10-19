@@ -12,7 +12,9 @@ export function initWalk() {
 
   const stops = Array.from(walk.querySelectorAll<HTMLElement>('section[data-stop]'));
   const order = stops.map((s) => s.dataset.stop!);
+  const intro = walk.querySelector<HTMLElement>('[data-intro]');
   const indicator = document.querySelector<HTMLElement>('[data-stop-current]');
+  const indicatorWrap = document.querySelector<HTMLElement>('[data-indicator]');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
@@ -24,13 +26,17 @@ export function initWalk() {
   // --- Scroll choreography ---------------------------------------------------------------
   let current = -1;
   const setCurrent = (i: number) => {
-    if (i === current || i < 0) return;
+    if (i === current) return;
     current = i;
+    if (indicatorWrap) indicatorWrap.hidden = i < 0;
+    if (i < 0) return;
     if (indicator) indicator.textContent = String(i + 1);
     track('wall_view', { wall: Number(stops[i].dataset.wall), work: order[i] });
   };
 
   if (reduced) {
+    intro?.style.setProperty('--walk', '0');
+    intro?.classList.add('is-copy');
     stops.forEach((s) => {
       s.style.setProperty('--zoom', '1');
       s.style.setProperty('--view', '1');
@@ -48,6 +54,13 @@ export function initWalk() {
       const vh = window.innerHeight;
       let best = -1;
       let bestDist = Infinity;
+      if (intro) {
+        const r = intro.getBoundingClientRect();
+        const travel = r.height - vh;
+        const w = travel > 0 ? Math.max(0, Math.min(1, -r.top / travel)) : 1;
+        intro.style.setProperty('--walk', w.toFixed(4));
+        intro.classList.toggle('is-copy', w < 0.3);
+      }
       for (const [i, stop] of stops.entries()) {
         const r = stop.getBoundingClientRect();
         if (r.bottom < -vh || r.top > 2 * vh) continue;
@@ -90,7 +103,7 @@ export function initWalk() {
     const apply = () => {
       raf = 0;
       for (const stop of stops) {
-        const art = stop.querySelector<HTMLElement>('.art');
+        const art = stop.querySelector<HTMLElement>('.plane');
         if (!art) continue;
         const r = art.getBoundingClientRect();
         if (r.bottom < 0 || r.top > window.innerHeight) continue;
@@ -171,10 +184,35 @@ export function initWalk() {
   }
 
   walk.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-open]');
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-start]') && order[0]) {
+      scrollToStop(order[0], reduced ? ('instant' as ScrollBehavior) : 'smooth');
+      return;
+    }
+    const btn = target.closest<HTMLElement>('[data-open]');
     if (!btn) return;
     open(btn.dataset.open!, 'walk', btn);
   });
+
+  if (intro && !reduced && finePointer) {
+    let raf = 0;
+    let x = 0;
+    let y = 0;
+    intro.addEventListener(
+      'pointermove',
+      (e) => {
+        x = (e.clientX / window.innerWidth) * 2 - 1;
+        y = (e.clientY / window.innerHeight) * 2 - 1;
+        if (!raf)
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            intro.style.setProperty('--px', x.toFixed(3));
+            intro.style.setProperty('--py', y.toFixed(3));
+          });
+      },
+      { passive: true },
+    );
+  }
 
   document.querySelectorAll<HTMLDialogElement>('dialog[data-dialog]').forEach((dialog) => {
     dialog.addEventListener('click', (e) => {

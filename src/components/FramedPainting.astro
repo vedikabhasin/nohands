@@ -1,0 +1,219 @@
+---
+/**
+ * A painting in a gilt frame, hung from a red pin on a wire, with a hanging price tag.
+ * The frame is pure CSS (layered gold gradients and bevels plus an ornament tile), lit from
+ * above with its shadow falling below. Frame width scales with the painting via container units.
+ */
+import { Picture } from 'astro:assets';
+import { altText, usd, widthsFor, type Work } from '@/lib/exhibition';
+
+interface Props {
+  work: Work;
+  /** Candidate widths for the responsive image. */
+  widths?: number[];
+  cap?: number;
+  sizes?: string;
+  eager?: boolean;
+  hanger?: boolean;
+  tag?: boolean;
+  class?: string;
+}
+
+const {
+  work,
+  widths = [480, 720, 960, 1280, 1600, 2000],
+  cap = 2000,
+  sizes = '(min-width: 900px) 44vw, 86vw',
+  eager = false,
+  hanger = true,
+  tag = true,
+  class: className,
+} = Astro.props;
+const sold = work.status === 'sold';
+---
+
+<div class:list={['framed', className]} style={`--ratio: ${work.image.width} / ${work.image.height};`}>
+  {hanger && (
+    <div class="hanger" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 4 L3 100 M50 4 L97 100" vector-effect="non-scaling-stroke" /></svg>
+      <span class="pin"></span>
+    </div>
+  )}
+  <div class="frame">
+    <div class="art">
+      <Picture
+        src={work.image}
+        widths={widthsFor(work.image, widths, cap)}
+        sizes={sizes}
+        formats={['avif', 'webp']}
+        fallbackFormat="jpg"
+        quality={82}
+        alt={altText(work)}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchpriority={eager ? 'high' : 'auto'}
+      />
+    </div>
+  </div>
+  {tag && (
+    <div class="tag-wrap" aria-hidden="true">
+      <span class="tag-string"></span>
+      <span class:list={['tag', { 'tag--sold': sold }]}>{sold ? 'Sold' : usd(work.originalPrice)}</span>
+    </div>
+  )}
+</div>
+
+<style>
+  .framed {
+    position: relative;
+    container-type: inline-size;
+    width: 100%;
+  }
+  .hanger {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 16cqw;
+    max-height: 5.5rem;
+    opacity: var(--hanger-opacity, 1);
+  }
+  .hanger svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .hanger path {
+    fill: none;
+    stroke: rgba(20, 20, 19, 0.38);
+    stroke-width: 1;
+  }
+  .pin {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: clamp(7px, 2.6cqw, 11px);
+    height: clamp(7px, 2.6cqw, 11px);
+    border-radius: 50%;
+    transform: translate(-50%, -40%);
+    background: radial-gradient(circle at 35% 32%, #ff8a8a, #c91f1f 55%, #6f0b0b);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+  .frame {
+    --fw: clamp(9px, 3.4cqw, 28px);
+    position: relative;
+    padding: var(--fw);
+    border-radius: 3px;
+    background: linear-gradient(
+      135deg,
+      #fff0b8 0%,
+      #d9a53a 16%,
+      #fbe49a 32%,
+      #b98320 52%,
+      #f7dc84 70%,
+      #c7922c 86%,
+      #ffeeb0 100%
+    );
+    box-shadow:
+      inset 0 0 0 1px rgba(70, 45, 8, 0.55),
+      inset 0 0 0 calc(var(--fw) * 0.26) rgba(255, 242, 196, 0.38),
+      inset 0 0 0 calc(var(--fw) * 0.32) rgba(90, 60, 10, 0.45),
+      inset 0 0 0 calc(var(--fw) * 0.7) rgba(255, 246, 205, 0.28),
+      inset 0 0 0 calc(var(--fw) - 1px) rgba(60, 40, 5, 0.6),
+      0 2px 2px rgba(20, 20, 19, 0.18),
+      0 28px 44px -18px rgba(20, 20, 19, 0.5),
+      0 10px 18px -8px rgba(20, 20, 19, 0.28);
+  }
+  /* ornament tile, visible only on the frame band because the picture sits above it */
+  .frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 3px;
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 12q6-9 12 0t12 0M12 0q-9 6 0 12t0 12' fill='none' stroke='%236b4a10' stroke-width='1.2'/%3E%3Ccircle cx='12' cy='12' r='1.4' fill='%236b4a10'/%3E%3C/svg%3E");
+    background-size: calc(var(--fw) * 1.6) calc(var(--fw) * 1.6);
+  }
+  /* glossy highlight from the light above */
+  .frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 3px;
+    pointer-events: none;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 35%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.18));
+    mix-blend-mode: soft-light;
+  }
+  .art {
+    position: relative;
+    z-index: 1;
+    aspect-ratio: var(--ratio);
+    overflow: hidden;
+    background: #ddd;
+    box-shadow:
+      inset 0 0 0 1px rgba(60, 40, 5, 0.55),
+      inset 0 3px 8px rgba(0, 0, 0, 0.35);
+  }
+  .art :global(picture),
+  .art :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: relative;
+    z-index: -1;
+  }
+  .art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.12;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.43 0 0 0 0 0.40 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+  }
+  .tag-wrap {
+    position: absolute;
+    top: calc(-1 * clamp(4px, 1.5cqw, 10px));
+    right: clamp(-10px, -3cqw, -4px);
+    display: grid;
+    justify-items: start;
+    transform-origin: 10% 0;
+    transform: rotate(16deg) scale(var(--tag-scale, 1));
+    opacity: var(--tag-opacity, 1);
+    z-index: 2;
+  }
+  .tag-string {
+    width: 1px;
+    height: clamp(8px, 3cqw, 16px);
+    margin-left: 10px;
+    background: rgba(20, 20, 19, 0.45);
+  }
+  .tag {
+    position: relative;
+    padding: 0.4rem 0.8rem 0.4rem 1rem;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(0.62rem, 2.8cqw, 0.85rem);
+    white-space: nowrap;
+    box-shadow: 0 3px 8px rgba(20, 20, 19, 0.3);
+  }
+  .tag::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 50%;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateY(-50%);
+  }
+  .tag--sold {
+    background: var(--accent);
+  }
+</style>

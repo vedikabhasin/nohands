@@ -4,9 +4,9 @@
  * /paintings/{id} (mode="page"): a small view of the painting, the facts, the options, Previous
  * and Next.
  */
-import { Picture } from 'astro:assets';
+import FramedPainting from '@/components/FramedPainting.astro';
 import PurchaseOptions from '@/components/PurchaseOptions.astro';
-import { altText, centimetres, inches, neighbours, paintingPath, widthsFor, type Exhibition, type Work } from '@/lib/exhibition';
+import { centimetres, inches, neighbours, paintingPath, type Exhibition, type Work } from '@/lib/exhibition';
 
 interface Props {
   work: Work;
@@ -16,23 +16,12 @@ interface Props {
 
 const { work, exhibition, mode } = Astro.props;
 const { prev, next } = neighbours(exhibition, work);
-const widths = widthsFor(work.image, [480, 720, 960, 1280], 1280);
 ---
 
 <article class:list={['detail', `detail--${mode}`]} data-detail={work.id}>
   <div class="stage">
     <div class="stage-inner" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
-      <Picture
-        src={work.image}
-        widths={widths}
-        sizes="(min-width: 900px) 32rem, 60vw"
-        formats={['avif', 'webp']}
-        fallbackFormat="jpg"
-        quality={82}
-        alt={altText(work)}
-        loading="lazy"
-        decoding="async"
-      />
+      <FramedPainting work={work} widths={[480, 720, 960, 1280]} cap={1280} sizes="(min-width: 900px) 32rem, 60vw" hanger={false} tag={false} />
     </div>
   </div>
 
@@ -106,17 +95,7 @@ const widths = widthsFor(work.image, [480, 720, 960, 1280], 1280);
     background: var(--ground-deep);
   }
   .stage-inner {
-    width: min(100%, calc(60svh * (var(--ratio))));
-    aspect-ratio: var(--ratio);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6), 0 20px 50px -18px rgba(20, 20, 19, 0.4);
-    background: var(--ground-low);
-    outline: 1.5px solid rgba(20, 20, 19, 0.25);
-    outline-offset: 10px;
-  }
-  .stage :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    width: min(100%, calc(56svh * (var(--ratio))));
   }
   .panel {
     display: grid;

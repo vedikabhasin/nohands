@@ -38,9 +38,11 @@ artwork. Square is never read at runtime.
 
 ## The walk
 
-`src/components/Stop.astro` is one painting. Each stop is a tall section with a sticky stage; the walk script
+`src/components/Intro.astro` is the gallery entrance: a CSS corridor with the exhibition's paintings hung along both
+walls and an arch the visitor scrolls through. `src/components/FramedPainting.astro` is the gilt frame with pin, wire
+and price tag. `src/components/Stop.astro` is one painting. Each stop is a tall section with a sticky stage; the walk script
 (`src/scripts/walk.ts`) turns scroll progress into `--zoom` (wall view to painting view and back) and `--view`
-(details on or off). Everything animated is `transform` or `opacity`. Pointer and device tilt move the painting
+(details on or off). Everything animated is `transform` or `opacity`, on two curves only: easeOutExpo (`--ease`) and easeOutBack (`--ease-back`) for small accents. Pointer and device tilt move the painting
 plane and its shadow. Reduced motion renders each stop as a static painting view.
 
 ## Routes

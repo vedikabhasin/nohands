@@ -4,6 +4,7 @@
  * pre-rendered in a <dialog> so buying never leaves the page or loses the visitor's place.
  */
 import Base from '@/layouts/Base.astro';
+import Intro from '@/components/Intro.astro';
 import Stop from '@/components/Stop.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
 import { getExhibitions, siteTagline, exhibitionPath, usd, priceFrom } from '@/lib/exhibition';
@@ -17,13 +18,12 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
 ---
 
 <Base title={`${exhibition.title} | ${siteTagline}`} description={description} canonical={exhibitionPath(exhibition)} bodyClass="is-walk">
-  <h1 class="visually-hidden">{exhibition.title}</h1>
-
-  <div class="walk" data-walk={exhibition.id}>
+    <div class="walk" data-walk={exhibition.id}>
+    <Intro exhibition={exhibition} />
     {exhibition.works.map((work) => <Stop work={work} exhibition={exhibition} />)}
   </div>
 
-  <p class="indicator chip" aria-live="polite">
+  <p class="indicator chip" aria-live="polite" data-indicator hidden>
     <span data-stop-current>1</span>&nbsp;/&nbsp;{exhibition.works.length}
   </p>
 
@@ -49,6 +49,9 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
     :global(html:has(body.is-walk)) {
       scroll-snap-type: none;
     }
+  }
+  .indicator[hidden] {
+    display: none;
   }
   .indicator {
     position: fixed;
@@ -85,7 +88,7 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
   }
   @media (prefers-reduced-motion: no-preference) {
     .sheet[open] {
-      animation: sheet-in 360ms var(--spring);
+      animation: sheet-in 360ms var(--ease);
     }
     @keyframes sheet-in {
       from {

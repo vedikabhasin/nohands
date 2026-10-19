@@ -7,17 +7,8 @@
  * transform and opacity only. `static` renders the painting view with no scroll choreography,
  * used by /paintings/{id} and by reduced motion.
  */
-import { Picture } from 'astro:assets';
-import {
-  altText,
-  centimetres,
-  inches,
-  printFrom,
-  usd,
-  widthsFor,
-  type Exhibition,
-  type Work,
-} from '@/lib/exhibition';
+import FramedPainting from '@/components/FramedPainting.astro';
+import { centimetres, inches, printFrom, usd, type Exhibition, type Work } from '@/lib/exhibition';
 
 interface Props {
   work: Work;
@@ -28,7 +19,6 @@ interface Props {
 }
 
 const { work, exhibition, static: isStatic = false, buyHref = '#buy' } = Astro.props;
-const widths = widthsFor(work.image, [480, 720, 960, 1280, 1600, 2000], 2000);
 const from = printFrom(work);
 const sold = work.status === 'sold';
 const Title = isStatic ? 'h1' : 'h2';
@@ -58,26 +48,9 @@ const Title = isStatic ? 'h1' : 'h2';
 
     <div class="hang">
       <figure class="work" id={`work-${work.id}`} data-work={work.id}>
-        <div class="plane">
-          <span class="shadow" aria-hidden="true"></span>
-          <span class="outline" aria-hidden="true"></span>
-          <div class="art" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
-            <Picture
-              src={work.image}
-              widths={widths}
-              sizes="(min-width: 900px) 44vw, 86vw"
-              formats={['avif', 'webp']}
-              fallbackFormat="jpg"
-              quality={82}
-              alt={altText(work)}
-              loading={work.index === 0 || isStatic ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchpriority={work.index === 0 || isStatic ? 'high' : 'auto'}
-            />
-          </div>
-          <span class:list={['tag', { 'tag--sold': sold }]} aria-hidden="true">
-            {sold ? 'Sold' : usd(work.originalPrice)}
-          </span>
+        <div class="plane" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
+          <span class="spot" aria-hidden="true"></span>
+          <FramedPainting work={work} eager={work.index === 0 || isStatic} />
         </div>
         <figcaption class="plate">
           <span class="plate-title">{work.title}</span>
@@ -130,6 +103,7 @@ const Title = isStatic ? 'h1' : 'h2';
     pointer-events: none;
   }
   .stage {
+    --shift-y: 2svh;
     position: sticky;
     top: 0;
     height: 100svh;
@@ -219,70 +193,24 @@ const Title = isStatic ? 'h1' : 'h2';
   }
   .plane {
     position: relative;
+    width: min(84vw, calc(38svh * (var(--ratio))));
     transform: perspective(1400px) rotateX(calc(var(--ty) * -3deg)) rotateY(calc(var(--tx) * 4deg));
     transform-style: preserve-3d;
     transition: transform 160ms linear;
+    --tag-opacity: var(--view);
+    --tag-scale: calc(0.7 + var(--view) * 0.3);
   }
-  .art {
-    position: relative;
-    aspect-ratio: var(--ratio);
-    width: min(86vw, calc(46svh * (var(--ratio))));
-    overflow: hidden;
-    background: var(--ground-low);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
-  }
-  .art :global(picture),
-  .art :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  .art::after {
-    content: '';
+  /* soft spotlight from above, behind the frame */
+  .spot {
     position: absolute;
-    inset: 0;
+    left: 50%;
+    top: -30%;
+    width: 220%;
+    height: 170%;
+    transform: translateX(-50%);
+    background: radial-gradient(50% 45% at 50% 40%, rgba(255, 252, 240, 0.9), rgba(255, 252, 240, 0) 70%);
+    opacity: calc(0.9 - var(--view) * 0.6);
     pointer-events: none;
-    opacity: 0.14;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.43 0 0 0 0 0.40 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 220px 220px;
-  }
-  .shadow {
-    position: absolute;
-    inset: 8% 4% -4% 4%;
-    background: rgba(20, 20, 19, 0.45);
-    filter: blur(24px);
-    transform: translate3d(calc(var(--tx) * -14px), calc(var(--ty) * -10px + 12px), -1px);
-    transition: transform 160ms linear;
-  }
-  /* Outline: a thin offset stroke around the picture that steps out as the painting view opens. */
-  .outline {
-    position: absolute;
-    inset: calc(-6px - var(--view) * 8px);
-    border: 1.5px solid rgba(20, 20, 19, calc(0.18 + var(--view) * 0.3));
-    border-radius: 4px;
-    pointer-events: none;
-    will-change: inset;
-  }
-  .tag {
-    position: absolute;
-    top: -0.9rem;
-    right: -0.9rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: 999px;
-    background: var(--ink);
-    color: #fff;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.82rem;
-    white-space: nowrap;
-    box-shadow: var(--shadow-soft);
-    transform: rotate(-6deg) scale(calc(0.6 + var(--view) * 0.4));
-    opacity: var(--view);
-    transform-origin: 20% 80%;
-  }
-  .tag--sold {
-    background: var(--accent);
   }
   .plate {
     display: grid;
@@ -352,14 +280,14 @@ const Title = isStatic ? 'h1' : 'h2';
   .stop.is-view .medium,
   .stop.is-view .dims,
   .stop.is-view .buy {
-    animation: land 520ms var(--spring) both;
+    animation: land 640ms var(--ease) both;
   }
   .stop.is-view .facts li:nth-child(2) { animation-delay: 60ms; }
   .stop.is-view .medium { animation-delay: 120ms; }
   .stop.is-view .dims { animation-delay: 160ms; }
   .stop.is-view .buy { animation-delay: 220ms; }
   @keyframes land {
-    from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.98); }
+    from { opacity: 0; transform: translate3d(0, 14px, 0); }
     to { opacity: 1; transform: none; }
   }
 
@@ -395,8 +323,8 @@ const Title = isStatic ? 'h1' : 'h2';
     .title {
       font-size: clamp(2.4rem, 3.6vw, 3.6rem);
     }
-    .art {
-      width: min(44vw, calc(72svh * (var(--ratio))));
+    .plane {
+      width: min(42vw, calc(58svh * (var(--ratio))));
     }
     .buy {
       min-width: 16rem;
@@ -433,8 +361,7 @@ const Title = isStatic ? 'h1' : 'h2';
     .details {
       pointer-events: auto;
     }
-    .plane,
-    .shadow {
+    .plane {
       transform: none !important;
     }
     .stop.is-view .facts li,
