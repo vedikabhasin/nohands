@@ -118,21 +118,23 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     -webkit-transform-style: flat;
     transform-style: flat;
   }
-  /* Walls, floors and ceilings are drawn at half size and scaled up, so every plane stays under
-     Safari's tiled-layer threshold (2048 device px). Tiled layers inside 3D scenes lose their
-     rasterised content on iOS: only the solid background colour survives. */
+  /* Walls, floors and ceilings are drawn at a reduced size and scaled up by --ps (set by the
+     walk script from the device pixel ratio), so every plane stays under Safari's tiled-layer
+     threshold of 2048 device px. Tiled layers inside 3D scenes lose their rasterised content on
+     iOS: only the solid background colour survives. At 1x screens --ps is 1, so nothing is
+     upscaled and gradients stay clean. */
   .wall {
-    width: calc(var(--len) / 2);
-    height: var(--ch);
+    width: calc(var(--len) / var(--ps, 1));
+    height: calc(var(--ch) * 2 / var(--ps, 1));
     background:
       linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 38%, rgba(20, 20, 19, 0.05)),
       var(--surface);
   }
   .wall-l {
-    transform: translate3d(-50%, -50%, 0) translate3d(calc(-1 * var(--cw)), 0, var(--zc)) rotateY(90deg) scale(2);
+    transform: translate3d(-50%, -50%, 0) translate3d(calc(-1 * var(--cw)), 0, var(--zc)) rotateY(90deg) scale(var(--ps, 1));
   }
   .wall-r {
-    transform: translate3d(-50%, -50%, 0) translate3d(var(--cw), 0, var(--zc)) rotateY(-90deg) scale(2);
+    transform: translate3d(-50%, -50%, 0) translate3d(var(--cw), 0, var(--zc)) rotateY(-90deg) scale(var(--ps, 1));
   }
   .hung {
     width: var(--pw);
@@ -144,17 +146,17 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     transform: translate3d(-50%, -50%, 0) translate3d(calc(var(--cw) - 1.5px), 0, var(--zp)) rotateY(-90deg);
   }
   .floor {
-    width: var(--cw);
-    height: calc(var(--len) / 2);
-    transform: translate3d(-50%, -50%, 0) translate3d(0, var(--ch), var(--zc)) rotateX(90deg) scale(2);
+    width: calc(var(--cw) * 2 / var(--ps, 1));
+    height: calc(var(--len) / var(--ps, 1));
+    transform: translate3d(-50%, -50%, 0) translate3d(0, var(--ch), var(--zc)) rotateX(90deg) scale(var(--ps, 1));
     background:
       linear-gradient(to right, rgba(20, 20, 19, 0.05), rgba(20, 20, 19, 0) 12%, rgba(20, 20, 19, 0) 88%, rgba(20, 20, 19, 0.05)),
       var(--ground-deep);
   }
   .ceiling {
-    width: var(--cw);
-    height: calc(var(--len) / 2);
-    transform: translate3d(-50%, -50%, 0) translate3d(0, calc(-1 * var(--ch)), var(--zc)) rotateX(-90deg) scale(2);
+    width: calc(var(--cw) * 2 / var(--ps, 1));
+    height: calc(var(--len) / var(--ps, 1));
+    transform: translate3d(-50%, -50%, 0) translate3d(0, calc(-1 * var(--ch)), var(--zc)) rotateX(-90deg) scale(var(--ps, 1));
     background:
       radial-gradient(38% 16% at 50% 50%, #fffdf4 0%, #fff6dc 45%, rgba(255, 246, 220, 0) 100%),
       #f4f2ee;
@@ -163,9 +165,9 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     background: #f4f2ee;
   }
   .end-wall {
-    width: var(--cw);
-    height: var(--ch);
-    transform: translate3d(-50%, -50%, 0) translate3d(0, 0, var(--zend)) scale(2);
+    width: calc(var(--cw) * 2 / var(--ps, 1));
+    height: calc(var(--ch) * 2 / var(--ps, 1));
+    transform: translate3d(-50%, -50%, 0) translate3d(0, 0, var(--zend)) scale(var(--ps, 1));
     background: radial-gradient(60% 50% at 50% 30%, #ffffff, var(--surface) 70%);
   }
 

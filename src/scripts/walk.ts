@@ -104,6 +104,10 @@ export function initWalk() {
     walk.style.setProperty('--cw', `${G.CW}px`);
     walk.style.setProperty('--ch', `${G.CH}px`);
     walk.style.setProperty('--zend', `${G.z(n - 1) - 2 * G.A}px`);
+    // Plane downscale factor: keep the largest corridor plane under 2000 device px per axis.
+    const dpr = window.devicePixelRatio || 1;
+    const maxDim = Math.max(2 * G.A, G.E + G.D0, 2 * G.CW, 2 * G.CH);
+    walk.style.setProperty('--ps', String(Math.max(1, Math.ceil((maxDim * dpr) / 2000))));
     // Bays: entry (door to the first bay), one per painting, and a short end bay.
     const bays = walk.querySelectorAll<HTMLElement>('[data-bay]');
     for (const bay of bays) {
