@@ -63,13 +63,15 @@ export function initWalk() {
     const vw = stage.clientWidth || window.innerWidth;
     const vh = stage.clientHeight || window.innerHeight;
     const mobile = vw < 900;
-    const CW = mobile ? vw * 0.72 : Math.min(vw * 0.44, 640); // half corridor width
-    const CH = mobile ? vh * 0.7 : Math.min(vh * 0.5, 520); // half corridor height
+    // Plane sizes are capped so that, drawn at half size, every plane stays under 1024 CSS px
+    // (Safari tiles larger layers and then fails to rasterise them inside a 3D scene).
+    const CW = Math.min(mobile ? vw * 0.72 : Math.min(vw * 0.44, 640), 1000); // half corridor width
+    const CH = Math.min(mobile ? vh * 0.7 : Math.min(vh * 0.5, 520), 1000); // half corridor height
     // Perspective distance. Must be less than the corridor width so the eye can stand a full
     // perspective distance from a painting while still inside the corridor (that is what makes
     // the held frame 1:1 without anything crossing the near plane).
     const P = Math.min(mobile ? 520 : 900, 2 * CW * 0.8);
-    const A = mobile ? P * 1.5 : P * 1.15; // half the spacing between paintings
+    const A = Math.min(mobile ? P * 1.5 : P * 1.15, 1000); // half the spacing between paintings
     const E = A * 0.6; // corridor behind the door
     const D0 = A * 0.35; // the short walk from the door to the first approach
     const CL = E + D0 + n * 2 * A + A; // entry bay + n bays + end bay
@@ -129,6 +131,20 @@ export function initWalk() {
       let pw = G.baseW * rel;
       if (s.ratio > 1) pw = Math.min(pw * 1.15, G.mobile ? G.vw * 0.84 : G.vw * 0.4);
       const detailsH = s.details?.offsetHeight ?? 190;
+      // Keep the painting plane (frame plus hanger) under 1000 CSS px on every axis, below
+      // Safari's tiled-layer threshold on retina screens.
+      const planeH = (w: number) => Math.min(0.16 * w, 88) + w / s.ratio + 2 * frameBand(w);
+      if (pw > 1000) pw = 1000;
+      if (planeH(pw) > 1000) {
+        let lo = 80;
+        let hi = pw;
+        for (let k = 0; k < 20; k++) {
+          const mid = (lo + hi) / 2;
+          if (planeH(mid) > 1000) hi = mid;
+          else lo = mid;
+        }
+        pw = lo;
+      }
       if (G.mobile) {
         // Mobile: title under the header; hanger, frame and facts form one group centred below it.
         const avail = G.vh - headerH - titleH - 24;
