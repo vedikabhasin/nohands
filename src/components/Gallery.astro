@@ -2,8 +2,9 @@
 /**
  * The walk: one continuous corridor built with CSS 3D, assembled from short bays (one per
  * painting plus an entry and an end bay). Each bay is four small planes, so no layer is ever
- * huge or extends far behind the camera. Paintings hang centred on their bay's wall, alternating
- * left and right, Water Droplets first on the left by the door. The walk script sets the bay
+ * huge or extends far behind the camera. Every plane, paintings included, is a direct child of
+ * the scene: no nesting, which Safari composites reliably. Paintings alternate left and right,
+ * Water Droplets first on the left by the door. The walk script sets the bay
  * positions and moves the camera; it also lays out the overlays. Reduced motion renders a flat
  * list instead.
  */
@@ -22,41 +23,38 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
 <div class="walk" data-walk={exhibition.id} data-count={stops.length}>
   <div class="stage" data-stage>
     <div class="scene" data-scene aria-hidden="true">
-      <div class="corridor">
-        <div class="bay bay--entry" data-bay="entry">
-          <div class="plane wall wall-l"></div>
-          <div class="plane wall wall-r"></div>
-          <div class="plane floor"></div>
-          <div class="plane ceiling ceiling--plain"></div>
+      <!-- Bays: four plain planes each. Every plane is a direct child of the scene (no wrappers),
+           which is the structure Safari composites reliably. -->
+      <div class="plane wall wall-l" data-bay="entry"></div>
+      <div class="plane wall wall-r" data-bay="entry"></div>
+      <div class="plane floor" data-bay="entry"></div>
+      <div class="plane ceiling ceiling--plain" data-bay="entry"></div>
+      {stops.map(({ work }) => (
+        <>
+          <div class="plane wall wall-l" data-bay={work.index}></div>
+          <div class="plane wall wall-r" data-bay={work.index}></div>
+          <div class="plane floor" data-bay={work.index}></div>
+          <div class="plane ceiling" data-bay={work.index}></div>
+        </>
+      ))}
+      <div class="plane wall wall-l" data-bay="end"></div>
+      <div class="plane wall wall-r" data-bay="end"></div>
+      <div class="plane floor" data-bay="end"></div>
+      <div class="plane ceiling ceiling--plain" data-bay="end"></div>
+      <div class="plane end-wall"></div>
+      <!-- Paintings: each its own plane, a hair in front of its wall. -->
+      {stops.map(({ work, side }) => (
+        <div
+          class:list={['plane', 'hung', side < 0 ? 'hung-l' : 'hung-r']}
+          data-hung={work.id}
+          data-index={work.index}
+          data-side={side}
+          data-ratio={work.image.width / work.image.height}
+          data-long={Math.max(work.originalSize.width, work.originalSize.height)}
+        >
+          <FramedPainting work={work} eager sizes="(min-width: 900px) 40vw, 84vw" />
         </div>
-        {stops.map(({ work, side }) => (
-          <div class="bay" data-bay={work.index}>
-            <div class="plane wall wall-l">
-              {side < 0 && (
-                <div class="hung" data-hung={work.id} data-index={work.index} data-side="-1" data-ratio={work.image.width / work.image.height} data-long={Math.max(work.originalSize.width, work.originalSize.height)}>
-                  <FramedPainting work={work} eager sizes="(min-width: 900px) 40vw, 84vw" />
-                </div>
-              )}
-            </div>
-            <div class="plane wall wall-r">
-              {side > 0 && (
-                <div class="hung" data-hung={work.id} data-index={work.index} data-side="1" data-ratio={work.image.width / work.image.height} data-long={Math.max(work.originalSize.width, work.originalSize.height)}>
-                  <FramedPainting work={work} eager sizes="(min-width: 900px) 40vw, 84vw" />
-                </div>
-              )}
-            </div>
-            <div class="plane floor"></div>
-            <div class="plane ceiling"></div>
-          </div>
-        ))}
-        <div class="bay bay--end" data-bay="end">
-          <div class="plane wall wall-l"></div>
-          <div class="plane wall wall-r"></div>
-          <div class="plane floor"></div>
-          <div class="plane ceiling ceiling--plain"></div>
-          <div class="plane end-wall"></div>
-        </div>
-      </div>
+      ))}
     </div>
 
     <div class="overlays">
@@ -96,6 +94,7 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     top: 0;
     height: 100svh;
     overflow: hidden;
+    -webkit-perspective: var(--p, 900px);
     perspective: var(--p, 900px);
     perspective-origin: 50% 50%;
     background: var(--ground);
@@ -105,27 +104,18 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 0;
-    height: 0;
+    width: 1px;
+    height: 1px;
+    -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
     will-change: transform;
   }
-  .corridor,
-  .bay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 0;
-    height: 0;
-    transform-style: preserve-3d;
-  }
-  /* Every plane is positioned from the scene origin: centre it, move it to its bay, rotate. */
+  /* Every plane is positioned from the scene origin: centre it, move it to its place, rotate. */
   .plane {
     position: absolute;
     left: 0;
     top: 0;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    -webkit-transform-style: flat;
     transform-style: flat;
   }
   .wall {
@@ -142,11 +132,13 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     transform: translate3d(-50%, -50%, 0) translate3d(var(--cw), 0, var(--zc)) rotateY(-90deg);
   }
   .hung {
-    position: absolute;
-    left: 50%;
-    top: 50%;
     width: var(--pw);
-    transform: translate(-50%, -50%);
+  }
+  .hung-l {
+    transform: translate3d(-50%, -50%, 0) translate3d(calc(-1 * var(--cw) + 1.5px), 0, var(--zp)) rotateY(90deg);
+  }
+  .hung-r {
+    transform: translate3d(-50%, -50%, 0) translate3d(calc(var(--cw) - 1.5px), 0, var(--zp)) rotateY(-90deg);
   }
   .floor {
     width: calc(var(--cw) * 2);

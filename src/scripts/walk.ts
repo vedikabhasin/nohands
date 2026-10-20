@@ -180,6 +180,7 @@ export function initWalk() {
         s.panel?.style.removeProperty('--details-top');
       }
       s.el.style.setProperty('--pw', `${pw}px`);
+      s.el.style.setProperty('--zp', `${G.z(s.index)}px`);
     }
   }
 
