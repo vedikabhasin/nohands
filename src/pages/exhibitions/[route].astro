@@ -80,6 +80,15 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
     .sheet[open] {
       animation: sheet-in 420ms var(--ease);
     }
+    .sheet.is-closing {
+      animation: sheet-out 260ms var(--ease) forwards;
+    }
+    @keyframes sheet-out {
+      to {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
     @keyframes sheet-in {
       from {
         opacity: 0;

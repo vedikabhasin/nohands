@@ -131,23 +131,22 @@ const sold = work.status === 'sold';
     inset: 0;
     border-radius: 3px;
     opacity: 0.18;
-    mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 12q6-9 12 0t12 0M12 0q-9 6 0 12t0 12' fill='none' stroke='%236b4a10' stroke-width='1.2'/%3E%3Ccircle cx='12' cy='12' r='1.4' fill='%236b4a10'/%3E%3C/svg%3E");
     background-size: calc(var(--fw) * 1.6) calc(var(--fw) * 1.6);
   }
-  /* glossy highlight from the light above */
+  /* glossy highlight from the light above (plain alpha, no blend mode: blend modes split layers in 3D) */
   .frame::after {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
     border-radius: 3px;
     pointer-events: none;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 35%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.18));
-    mix-blend-mode: soft-light;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 35%, rgba(0, 0, 0, 0) 65%, rgba(0, 0, 0, 0.12));
   }
   .art {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     aspect-ratio: var(--ratio);
     overflow: hidden;
     background: #ddd;
@@ -160,40 +159,52 @@ const sold = work.status === 'sold';
     width: 100%;
     height: 100%;
     object-fit: contain;
-    position: relative;
-    z-index: -1;
+    display: block;
   }
+  /* paper grain over the picture: plain alpha, no blend mode */
   .art::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.12;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.43 0 0 0 0 0.40 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.28 0 0 0 0 0.25 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 220px 220px;
   }
+  /* Tag: a string pinned at the frame's top-right corner, the tag hanging over the frame. */
   .tag-wrap {
     position: absolute;
     top: 0;
     right: 0;
-    display: grid;
-    justify-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 0;
     transform-origin: 50% 0;
-    transform: rotate(calc(-22deg * var(--tag-swing, 1))) scale(var(--tag-scale, 1));
+    transform: rotate(14deg) scale(var(--tag-scale, 1));
     opacity: var(--tag-opacity, 1);
-    z-index: 2;
+    z-index: 3;
   }
   .tag-string {
     width: 1.5px;
-    height: clamp(14px, 6cqw, 30px);
+    height: clamp(12px, 5cqw, 24px);
     background: rgba(20, 20, 19, 0.55);
+    flex: none;
+  }
+  .tag-wrap::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 32%, #fff0b8, #c7922c 60%, #7a5410);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   }
   .tag {
     position: relative;
+    flex: none;
     padding: 0.4rem 0.8rem 0.4rem 1rem;
-    transform: translateX(calc(50% - 0.6rem));
     border-radius: 999px;
     background: var(--ink);
     color: #fff;
@@ -217,9 +228,5 @@ const sold = work.status === 'sold';
   .tag--sold {
     background: var(--accent);
   }
-  @media (max-width: 899px) {
-    .tag-wrap {
-      right: 10%;
-    }
-  }
+
 </style>

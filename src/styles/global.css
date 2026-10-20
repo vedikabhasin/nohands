@@ -46,8 +46,10 @@ body {
   min-height: 100svh;
 }
 
-html:has(dialog[open]) {
-  overflow: hidden;
+@media (hover: hover) and (pointer: fine) {
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
 }
 
 img,

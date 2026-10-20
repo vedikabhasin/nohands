@@ -38,9 +38,10 @@ artwork. Square is never read at runtime.
 
 ## The walk
 
-`src/components/Gallery.astro` is one continuous corridor built with CSS 3D: paintings hang along both walls in walk
-order, alternating left and right. `src/scripts/walk.ts` turns scroll position into a camera path: walk forward, turn
-to face a painting so its frame lands 1:1, hold while the facts show, turn back, walk on. The scene receives one
+`src/components/Gallery.astro` is one continuous corridor built with CSS 3D from short bays (one per painting), so no
+layer is huge or passes behind the camera: paintings hang along both walls in walk order, alternating left and right. `src/scripts/walk.ts` turns scroll position into a camera path: walk forward, turn
+toward a painting as you approach so its frame lands 1:1 one perspective distance away (the eye never leaves the
+corridor), hold while the facts show, turn back, walk on. The scene receives one
 transform per frame; nothing paints on scroll. `src/components/FramedPainting.astro` is the gilt frame with pin, wire
 and price tag; `src/components/PaintingDetails.astro` is the facts block (gilt star for works flagged
 `one_of_a_kind_badge: "gold"`). Reduced motion renders the paintings as a flat list.
