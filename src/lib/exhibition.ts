@@ -231,7 +231,7 @@ export function exhibitionPath(exhibition: Exhibition): string {
   return `/exhibition/${exhibition.route}`;
 }
 export function gridPath(exhibition: Exhibition): string {
-  return `${exhibitionPath(exhibition)}/grid`;
+  return `/grid/${exhibition.route}`;
 }
 export function paintingPath(work: Work): string {
   return `/paintings/${work.id}`;

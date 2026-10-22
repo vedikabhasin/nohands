@@ -8,7 +8,7 @@ import { getImage } from 'astro:assets';
 import Base from '@/layouts/Base.astro';
 import Gallery from '@/components/Gallery.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
-import { getExhibitions, exhibitionPath, gridPath, paintingPath, exhibitionDescription, exhibitionJsonLd, altText } from '@/lib/exhibition';
+import { getExhibitions, exhibitionPath, exhibitionDescription, exhibitionJsonLd, altText } from '@/lib/exhibition';
 
 export function getStaticPaths() {
   return getExhibitions().map((exhibition) => ({ params: { route: exhibition.route }, props: { exhibition } }));
@@ -39,17 +39,6 @@ const image = {
 
   <Gallery exhibition={exhibition} />
 
-  <!-- Crawlable index of the works, after the walk. -->
-  <nav class="works-index" aria-label="Works in this exhibition">
-    <h2 class="eyebrow">Works in this exhibition</h2>
-    <ol>
-      {exhibition.works.map((work) => (
-        <li><a href={paintingPath(work)}>{work.title}</a> <span class="muted">{work.medium}</span></li>
-      ))}
-    </ol>
-    <p><a href={gridPath(exhibition)}>See all works as a grid</a></p>
-  </nav>
-
   <p class="indicator chip" aria-live="polite" data-indicator hidden>
     <span data-stop-current>1</span>&nbsp;/&nbsp;{exhibition.works.length}
   </p>
@@ -69,25 +58,6 @@ const image = {
 </Base>
 
 <style>
-  .works-index {
-    max-width: 40rem;
-    margin: 0 auto;
-    padding: 3rem 1.5rem 1rem;
-    font-size: 0.9rem;
-  }
-  .works-index ol {
-    margin: 0.75rem 0 1rem;
-    padding-left: 1.25rem;
-    display: grid;
-    gap: 0.35rem;
-  }
-  .works-index a {
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-  }
-  .works-index .muted {
-    font-size: 0.8rem;
-  }
   .indicator[hidden] {
     display: none;
   }

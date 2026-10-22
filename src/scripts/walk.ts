@@ -92,6 +92,7 @@ export function initWalk() {
       S: mobile ? 0 : vw * 0.19, // painting sits left of centre on desktop
       introSpan: mobile ? vh * 1.0 : vh * 0.8,
       stopSpan: vh * 2.6,
+      outroSpan: vh * 0.9,
       z: (i: number) => -(E + D0 + A + i * 2 * A), // world z of painting i (walk goes toward -z)
       zDoor: -E, // eye z at the door (the entry bay runs from 0 to -(E + D0))
       baseW,
@@ -129,7 +130,7 @@ export function initWalk() {
       bay.style.setProperty('--zc', `${zc}px`);
       bay.style.setProperty('--len', `${len}px`);
     }
-    walk.style.height = `${G.introSpan + n * G.stopSpan + G.vh}px`;
+    walk.style.height = `${G.introSpan + n * G.stopSpan + G.outroSpan + G.vh}px`;
     const titleH = 40;
     for (const s of stops) {
       // Gentle relative scale: a 16 in painting hangs a little larger than an 11 in one.
@@ -247,6 +248,11 @@ export function initWalk() {
     if (scrolled < G.introSpan) {
       const t = smooth(scrolled / G.introSpan);
       ez = lerp(G.zDoor, G.z(0) + G.A, t);
+    } else if (scrolled >= G.introSpan + n * G.stopSpan) {
+      // Outro: walk up to the end wall until its engraving reads 1:1.
+      const t = smooth((scrolled - G.introSpan - n * G.stopSpan) / G.outroSpan);
+      const zEnd = G.z(n - 1) - 2 * G.A;
+      ez = lerp(G.z(n - 1) - G.A, zEnd + G.P, t);
     } else {
       const i = Math.min(n - 1, Math.floor((scrolled - G.introSpan) / G.stopSpan));
       const u = Math.max(0, Math.min(1, (scrolled - G.introSpan - i * G.stopSpan) / G.stopSpan));
@@ -300,6 +306,8 @@ export function initWalk() {
     if (nav) {
       nav.hidden = active < 0;
       nav.style.setProperty('--nav', hold > 0.5 ? '1' : '0');
+      const link = nav.querySelector<HTMLAnchorElement>('[data-page-link]');
+      if (link && active >= 0) link.href = `/paintings/${order[active]}`;
     }
     setCurrent(active);
   }

@@ -10,7 +10,7 @@
  */
 import FramedPainting from '@/components/FramedPainting.astro';
 import PaintingDetails from '@/components/PaintingDetails.astro';
-import { paintingPath, type Exhibition } from '@/lib/exhibition';
+import { gridPath, paintingPath, type Exhibition } from '@/lib/exhibition';
 
 interface Props {
   exhibition: Exhibition;
@@ -22,29 +22,40 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
 
 <div class="walk" data-walk={exhibition.id} data-count={stops.length}>
   <div class="stage" data-stage>
-    <div class="scene" data-scene aria-hidden="true">
+    <div class="scene" data-scene>
       <!-- Bays: four plain planes each. Every plane is a direct child of the scene (no wrappers),
            which is the structure Safari composites reliably. -->
-      <div class="plane wall wall-l" data-bay="entry"></div>
-      <div class="plane wall wall-r" data-bay="entry"></div>
-      <div class="plane floor" data-bay="entry"></div>
-      <div class="plane ceiling ceiling--plain" data-bay="entry"></div>
+      <div class="plane wall wall-l" data-bay="entry" aria-hidden="true"></div>
+      <div class="plane wall wall-r" data-bay="entry" aria-hidden="true"></div>
+      <div class="plane floor" data-bay="entry" aria-hidden="true"></div>
+      <div class="plane ceiling ceiling--plain" data-bay="entry" aria-hidden="true"></div>
       {stops.map(({ work }) => (
         <>
-          <div class="plane wall wall-l" data-bay={work.index}></div>
-          <div class="plane wall wall-r" data-bay={work.index}></div>
-          <div class="plane floor" data-bay={work.index}></div>
-          <div class="plane ceiling" data-bay={work.index}></div>
+          <div class="plane wall wall-l" data-bay={work.index} aria-hidden="true"></div>
+          <div class="plane wall wall-r" data-bay={work.index} aria-hidden="true"></div>
+          <div class="plane floor" data-bay={work.index} aria-hidden="true"></div>
+          <div class="plane ceiling" data-bay={work.index} aria-hidden="true"></div>
         </>
       ))}
-      <div class="plane wall wall-l" data-bay="end"></div>
-      <div class="plane wall wall-r" data-bay="end"></div>
-      <div class="plane floor" data-bay="end"></div>
-      <div class="plane ceiling ceiling--plain" data-bay="end"></div>
-      <div class="plane end-wall"></div>
+      <div class="plane wall wall-l" data-bay="end" aria-hidden="true"></div>
+      <div class="plane wall wall-r" data-bay="end" aria-hidden="true"></div>
+      <div class="plane floor" data-bay="end" aria-hidden="true"></div>
+      <div class="plane ceiling ceiling--plain" data-bay="end" aria-hidden="true"></div>
+      <div class="plane end-wall">
+        <!-- The list of works, engraved into the end wall. Real links: crawlable and clickable. -->
+        <nav class="engraved" aria-label="Works in this exhibition">
+          <h2 class="engraved-title">Works in this exhibition</h2>
+          <ol>
+            {stops.map(({ work }) => (
+              <li><a href={paintingPath(work)}>{work.title}</a><span class="engraved-medium">{work.medium}</span></li>
+            ))}
+          </ol>
+          <p class="engraved-foot"><a href={gridPath(exhibition)}>See all works as a grid</a></p>
+        </nav>
+      </div>
       <!-- A soft pool of light on the wall behind each painting, then the painting itself. -->
       {stops.map(({ work, side }) => (
-        <div class:list={['plane', 'pool', side < 0 ? 'hung-l' : 'hung-r']} data-pool={work.id} data-side={side}></div>
+        <div class:list={['plane', 'pool', side < 0 ? 'hung-l' : 'hung-r']} data-pool={work.id} data-side={side} aria-hidden="true"></div>
       ))}
       {stops.map(({ work, side }) => (
         <div
@@ -69,12 +80,12 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
           <h2 class="title title--mobile">{work.title}</h2>
           <div class="panel-details" data-details>
             <h2 class="title title--desktop" aria-hidden="true">{work.title}</h2>
-            <PaintingDetails work={work} action="dialog" compact />
-            <a class="page-link" href={paintingPath(work)}>View this work's page</a>
+            <PaintingDetails work={work} action="dialog" compact align="start-desktop" />
           </div>
         </div>
       ))}
       <nav class="walk-nav" aria-label="Move between works" data-walk-nav hidden>
+        <a class="page-link" data-page-link href={paintingPath(stops[0].work)}>View this work's page</a>
         <button class="icon-btn" type="button" data-step="-1" aria-label="Previous work">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -189,6 +200,60 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     height: calc(var(--ch) * 2 / var(--ps, 1));
     transform: translate3d(-50%, -50%, 0) translate3d(0, 0, var(--zend)) scale(var(--ps, 1));
     background: radial-gradient(60% 50% at 50% 30%, rgba(255, 253, 247, 0.9), var(--wall) 70%);
+    display: grid;
+    place-items: center;
+  }
+  /* Engraved type: low contrast, a light edge above and a shadow below, as if cut into the plaster. */
+  .engraved {
+    /* sizes are divided by --ps because the plane is drawn small and scaled up */
+    width: calc(26rem / var(--ps, 1));
+    max-width: 84%;
+    font-size: calc(0.95rem / var(--ps, 1));
+    color: rgba(20, 20, 19, 0.55);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 -1px 0 rgba(20, 20, 19, 0.12);
+    letter-spacing: 0.01em;
+  }
+  .engraved-title {
+    margin: 0 0 0.9em;
+    font-family: var(--font-text);
+    font-size: 0.72em;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(20, 20, 19, 0.45);
+  }
+  .engraved ol {
+    margin: 0;
+    padding-left: 1.4em;
+    display: grid;
+    gap: 0.35em;
+  }
+  .engraved li {
+    display: list-item;
+    list-style: decimal;
+  }
+  .engraved li::marker {
+    color: rgba(20, 20, 19, 0.4);
+  }
+  .engraved a {
+    color: rgba(20, 20, 19, 0.72);
+    font-weight: 500;
+  }
+  .engraved a:hover {
+    color: var(--ink);
+  }
+  .engraved-medium {
+    margin-left: 0.6em;
+    font-size: 0.82em;
+    color: rgba(20, 20, 19, 0.45);
+  }
+  .engraved-foot {
+    margin: 1.1em 0 0;
+    font-size: 0.9em;
+  }
+  .engraved-foot a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 
   /* 2D overlays: one panel per painting, shown while the camera holds on it. */
@@ -219,6 +284,7 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     right: clamp(1rem, 3vw, 2rem);
     bottom: max(1.25rem, env(safe-area-inset-bottom));
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     pointer-events: auto;
     opacity: var(--nav, 0);
@@ -286,28 +352,18 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
       padding: 0;
       transform: translate3d(calc((1 - var(--h)) * 14px), -50%, 0);
     }
-    .panel-details :global(.details) {
-      justify-items: start;
-      text-align: left;
-    }
-    .panel-details :global(.facts li) {
-      justify-content: flex-start;
-    }
   }
 
   .page-link {
-    display: block;
-    margin-top: 0.6rem;
+    margin-right: 0.5rem;
     font-size: 0.74rem;
     color: var(--mute);
-    text-align: center;
     text-decoration: underline;
     text-underline-offset: 0.2em;
+    white-space: nowrap;
   }
-  @media (min-width: 900px) {
-    .page-link {
-      text-align: left;
-    }
+  .page-link:hover {
+    color: var(--ink);
   }
   .static-list {
     display: none;

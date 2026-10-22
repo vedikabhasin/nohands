@@ -54,7 +54,7 @@ Easing uses two curves only: easeOutExpo (`--ease`) and easeOutBack (`--ease-bac
 |---|---|
 | `/` | 302 to the current exhibition |
 | `/exhibition/001` | the gallery walk (`/exhibition/001-{slug}` once the exhibition is named); `?at={work-id}` lands on that work |
-| `/exhibition/001/grid` | all works as a grid, each a link to its page |
+| `/grid/001` | all works as a grid, each a link to its page |
 | `/exhibitions/*` | 301 to the singular route (retired preview path) |
 | `/paintings/{id}` | direct, indexable painting page |
 | `/product/*`, `/shop*` | 301 to the exhibition (the only legacy Square rule) |

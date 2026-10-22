@@ -5,3 +5,4 @@
 
 # Retired plural route from the preview.
 /exhibitions/*  /exhibition/:splat  301
+/exhibition/*/grid  /grid/:splat  301

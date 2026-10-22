@@ -12,9 +12,11 @@ interface Props {
   action: 'dialog' | 'link';
   href?: string;
   compact?: boolean;
+  /** 'center' everywhere, 'start' everywhere, or 'start-desktop' (start from 900px, centred below). */
+  align?: 'center' | 'start' | 'start-desktop';
 }
 
-const { work, action, href = '#buy', compact = false } = Astro.props;
+const { work, action, href = '#buy', compact = false, align = 'center' } = Astro.props;
 const sold = work.status === 'sold';
 const from = printFrom(work);
 const gradId = `gilt-${work.id}-${compact ? 'c' : 'f'}`;
@@ -23,11 +25,11 @@ const secondary = sold ? null : from !== null ? 'Explore print options' : null;
 const Tag = action === 'link' ? 'a' : 'button';
 const attrs = (variant: 'original' | 'print') =>
   action === 'link'
-    ? { href: `${href}${href.includes('?') ? '&' : '?'}choose=${variant}` }
+    ? { href, 'data-choose': variant }
     : { type: 'button' as const, 'data-open': work.id, 'data-choose': variant, 'aria-haspopup': 'dialog' as const };
 ---
 
-<div class:list={['details', { 'details--compact': compact }]}>
+<div class:list={['details', { 'details--compact': compact, 'details--start': align === 'start', 'details--start-desktop': align === 'start-desktop' }]}>
   <ul class="facts">
     <li>
       <svg class:list={['star', { 'star--gold': work.badge === 'gold' }]} width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
@@ -138,12 +140,22 @@ const attrs = (variant: 'original' | 'print') =>
     padding: 0.55rem 1.2rem;
     font-size: 0.88rem;
   }
-  :global(.details--left) .details,
-  :global(.details--left) .actions {
+  .details--start,
+  .details--start .actions {
     justify-items: start;
     text-align: left;
   }
-  :global(.details--left) .facts li {
+  .details--start .facts li {
     justify-content: flex-start;
+  }
+  @media (min-width: 900px) {
+    .details--start-desktop,
+    .details--start-desktop .actions {
+      justify-items: start;
+      text-align: left;
+    }
+    .details--start-desktop .facts li {
+      justify-content: flex-start;
+    }
   }
 </style>

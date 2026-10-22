@@ -36,10 +36,10 @@ const image = {
     <div class="frame-wrap" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
       <FramedPainting work={work} eager sizes="(min-width: 900px) 40vw, 84vw" />
     </div>
-    <div class="facts details--left">
+    <div class="facts">
       <p class="eyebrow"><a href={exhibitionPath(exhibition)}>{exhibition.title}</a> · {work.index + 1} of {exhibition.works.length}</p>
       <h1 class="title">{work.title}</h1>
-      <PaintingDetails work={work} action="link" href="#buy" />
+      <PaintingDetails work={work} action="link" href="#buy" align="start-desktop" />
     </div>
   </section>
   <section class="buy-section" id="buy">
@@ -50,13 +50,12 @@ const image = {
   </section>
 
   <script>
-    // Deep link from the facts block: #buy?choose=print preselects the print option.
-    const m = location.hash.match(/choose=(original|print)/);
+    // The facts block's actions jump to the purchase section and preselect that option.
     const form = document.querySelector<HTMLElement>('form[data-purchase]');
-    if (m && form) form.dataset.choose = m[1];
-    window.addEventListener('hashchange', () => {
-      const h = location.hash.match(/choose=(original|print)/);
-      if (h && form) form.dataset.choose = h[1];
+    document.querySelectorAll<HTMLAnchorElement>('a[data-choose]').forEach((a) => {
+      a.addEventListener('click', () => {
+        if (form) form.dataset.choose = a.dataset.choose!;
+      });
     });
   </script>
 </Base>
