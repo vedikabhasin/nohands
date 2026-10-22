@@ -206,9 +206,8 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
   /* Engraved type: low contrast, a light edge above and a shadow below, as if cut into the plaster. */
   .engraved {
     /* sizes are divided by --ps because the plane is drawn small and scaled up */
-    width: calc(26rem / var(--ps, 1));
-    max-width: 84%;
-    font-size: calc(0.95rem / var(--ps, 1));
+    width: calc(min(26rem, 82vw) / var(--ps, 1));
+    font-size: calc(min(0.95rem, 3.6vw) / var(--ps, 1));
     color: rgba(20, 20, 19, 0.55);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 -1px 0 rgba(20, 20, 19, 0.12);
     letter-spacing: 0.01em;
