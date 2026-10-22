@@ -26,7 +26,7 @@ function withReference(link: string | null, variant: string): string | null {
 
 <form class="purchase" data-purchase data-work={work.id} data-default-kind={defaultKind} data-default-size={defaultSize} novalidate>
   <fieldset class="group">
-    <legend class="eyebrow">Choose your artwork</legend>
+    <legend class="eyebrow">Choose</legend>
 
     {
       originalAvailable ? (
@@ -37,11 +37,11 @@ function withReference(link: string | null, variant: string): string | null {
             value="original"
             data-price={work.originalPrice}
             data-link={withReference(work.stripeOriginal, 'original')}
-            data-label="Original painting"
+            data-label={`Original ${work.kind}`}
             checked
           />
           <span class="opt-body">
-            <span class="opt-title">Original painting</span>
+            <span class="opt-title">Original {work.kind}</span>
             <span class="opt-sub">One of a kind · {inches(work.originalSize)}</span>
           </span>
           <span class="opt-price">{usd(work.originalPrice)}</span>
@@ -50,7 +50,7 @@ function withReference(link: string | null, variant: string): string | null {
         <div class="opt is-sold" aria-disabled="true">
           <span class="dot" aria-hidden="true" />
           <span class="opt-body">
-            <span class="opt-title">Original painting</span>
+            <span class="opt-title">Original {work.kind}</span>
             <span class="opt-sub">One of a kind · {inches(work.originalSize)}</span>
           </span>
           <span class="opt-price">
@@ -66,11 +66,11 @@ function withReference(link: string | null, variant: string): string | null {
         type="radio"
         name={`kind-${work.id}`}
         value="print"
-        data-label="Fine art reproduction"
+        data-label="Fine art print"
         checked={!originalAvailable}
       />
       <span class="opt-body">
-        <span class="opt-title">Fine art reproduction</span>
+        <span class="opt-title">Fine art print</span>
         <span class="opt-sub">Made to order</span>
       </span>
       <span class="opt-price">{printFrom !== null ? `from ${usd(printFrom)}` : ''}</span>
@@ -78,7 +78,7 @@ function withReference(link: string | null, variant: string): string | null {
   </fieldset>
 
   <fieldset class="group sizes" data-sizes disabled={originalAvailable} aria-disabled={originalAvailable ? "true" : undefined}>
-    <legend class="eyebrow">Select a size</legend>
+    <legend class="eyebrow">Print size</legend>
     {
       work.prints.map((p) => (
         <label class:list={['opt', { 'is-unavailable': !p.available }]}>
@@ -88,7 +88,7 @@ function withReference(link: string | null, variant: string): string | null {
             value={p.key}
             data-price={p.price}
             data-link={withReference(p.stripe, `print_${p.key}`)}
-            data-label={`${p.label} reproduction`}
+            data-label={`${p.label} print`}
             disabled={!p.available}
             checked={p.key === defaultSize}
           />
@@ -110,8 +110,8 @@ function withReference(link: string | null, variant: string): string | null {
       <span class="total-label" data-total-label></span>
       <strong class="total-price" data-total-price></strong>
     </p>
-    <a class="pill pill-primary buy" data-buy href="#" aria-disabled="true" rel="noopener">Buy</a>
-    <p class="pending muted" data-pending hidden>Checkout for this option is being set up.</p>
+    <a class="pill pill-primary buy" data-buy href="#" aria-disabled="true" rel="noopener">Purchase</a>
+    <p class="pending muted" data-pending hidden>Checkout for this option opens soon.</p>
   </div>
 </form>
 
@@ -146,7 +146,7 @@ function withReference(link: string | null, variant: string): string | null {
       const link = pick.dataset.link || '';
       totalLabel.textContent = pick.dataset.label ?? '';
       totalPrice.textContent = fmt.format(price);
-      buy.textContent = isPrint ? 'Order reproduction' : 'Source original';
+      buy.textContent = isPrint ? 'Purchase print' : 'Purchase original';
       if (link) {
         buy.href = link;
         buy.removeAttribute('aria-disabled');
@@ -166,6 +166,16 @@ function withReference(link: string | null, variant: string): string | null {
     };
 
     form.addEventListener('change', render);
+    // The opener may ask for a kind up front (data-choose on the form).
+    const choose = (kind: string) => {
+      const input = form.querySelector<HTMLInputElement>(`input[value="${kind}"]`);
+      if (input && !input.disabled) {
+        input.checked = true;
+        render();
+      }
+    };
+    new MutationObserver(() => form.dataset.choose && choose(form.dataset.choose)).observe(form, { attributes: true, attributeFilter: ['data-choose'] });
+    if (form.dataset.choose) choose(form.dataset.choose);
     buy.addEventListener('click', (e) => {
       if (buy.getAttribute('aria-disabled') === 'true') {
         e.preventDefault();

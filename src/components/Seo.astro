@@ -1,0 +1,40 @@
+---
+/**
+ * Head metadata shared by every page: title, description, canonical, Open Graph and Twitter
+ * cards, and optional JSON-LD. Everything is passed in from the page, which reads the data layer.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  canonical: string;
+  /** Absolute URL of the share image, when the page has one. */
+  image?: { url: string; width: number; height: number; alt: string };
+  type?: 'website' | 'article';
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { title, description, canonical, image, type = 'website', jsonLd } = Astro.props;
+---
+
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+<link rel="canonical" href={canonical} />
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content="NoHands" />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+<meta property="og:url" content={canonical} />
+{image && (
+  <>
+    <meta property="og:image" content={image.url} />
+    <meta property="og:image:width" content={String(image.width)} />
+    <meta property="og:image:height" content={String(image.height)} />
+    <meta property="og:image:alt" content={image.alt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={image.url} />
+  </>
+)}
+{!image && <meta name="twitter:card" content="summary" />}
+<meta name="twitter:title" content={title} />
+{description && <meta name="twitter:description" content={description} />}
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

@@ -27,7 +27,7 @@ const { prev, next } = neighbours(exhibition, work);
 
   <div class="panel">
     <div class="panel-head">
-      <p class="eyebrow">{exhibition.title} · {work.index + 1} of {exhibition.works.length}</p>
+      <p class="eyebrow">{work.status === 'sold' ? 'Original sold · prints available' : 'Original available'}</p>
       {mode === 'panel' && (
         <button class="icon-btn close" type="button" data-close aria-label="Close and return to the gallery">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" /></svg>
@@ -39,6 +39,7 @@ const { prev, next } = neighbours(exhibition, work);
       <h2 class="title">{work.title}</h2>
       <p class="meta">{work.medium}</p>
       <p class="meta muted">{inches(work.originalSize)} <span aria-hidden="true">|</span> {centimetres(work.originalSize)}</p>
+      <p class="meta muted">{exhibition.title} · {work.index + 1} of {exhibition.works.length}</p>
     </header>
 
     <PurchaseOptions work={work} />

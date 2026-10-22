@@ -9,6 +9,10 @@
   --mute: #8f8c85;
   --line: rgba(20, 20, 19, 0.1);
   --accent: #9a4a2b;
+  /* gallery environment: warm ivory walls, warm-neutral ceiling, stone floor */
+  --wall: #f3efe6;
+  --ceiling: #efebe2;
+  --floor: #dcd7cc;
   --shadow-soft: 0 10px 30px rgba(20, 20, 19, 0.08), 0 2px 6px rgba(20, 20, 19, 0.05);
   --shadow-lift: 0 18px 44px rgba(20, 20, 19, 0.14), 0 4px 10px rgba(20, 20, 19, 0.06);
 

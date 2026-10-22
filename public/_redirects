@@ -1,4 +1,7 @@
 # The only legacy rule: old Square painting and shop links land in the exhibition instead of a 404.
-/product/*  /exhibitions/001  301
-/shop       /exhibitions/001  301
-/shop/*     /exhibitions/001  301
+/product/*  /exhibition/001  301
+/shop       /exhibition/001  301
+/shop/*     /exhibition/001  301
+
+# Retired plural route from the preview.
+/exhibitions/*  /exhibition/:splat  301

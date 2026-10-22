@@ -53,10 +53,21 @@ Easing uses two curves only: easeOutExpo (`--ease`) and easeOutBack (`--ease-bac
 | Route | What |
 |---|---|
 | `/` | 302 to the current exhibition |
-| `/exhibitions/001` | the gallery walk (`/exhibitions/001-{slug}` once the exhibition is named); `?at={work-id}` lands on that work |
+| `/exhibition/001` | the gallery walk (`/exhibition/001-{slug}` once the exhibition is named); `?at={work-id}` lands on that work |
+| `/exhibition/001/grid` | all works as a grid, each a link to its page |
+| `/exhibitions/*` | 301 to the singular route (retired preview path) |
 | `/paintings/{id}` | direct, indexable painting page |
 | `/product/*`, `/shop*` | 301 to the exhibition (the only legacy Square rule) |
 | `/success`, `/cancel` | Stripe return pages |
 
-Still to build: `/exhibitions/001/grid`, `/commission`, structured data and Open Graph, PostHog events (the client already
-dispatches `nohands:track` DOM events with the agreed names).
+Still to build: `/commission`, PostHog events (the client already dispatches `nohands:track` DOM events with the agreed
+names).
+
+## SEO
+
+Every painting page is static HTML with a unique `<title>` (the JSON's `seo_title`), a factual meta description, a
+canonical URL, Open Graph and Twitter card with a 1200px share image, a real `<img>` with alt text, and JSON-LD:
+`VisualArtwork` plus a `Product` with one `Offer` per variant (original, each print size), prices and availability from
+the same record. `@astrojs/sitemap` writes `sitemap-index.xml`; `public/robots.txt` points to it. The exhibition page
+carries a crawlable list of every work. `scripts/` has no checker committed; the build is verified by hand with a
+script that compares the JSON-LD against the JSON.

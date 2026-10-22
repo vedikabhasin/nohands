@@ -1,0 +1,126 @@
+---
+/**
+ * Grid view: every work in walk order, from the same records as the walk. Each tile is a real
+ * link to the work's page.
+ */
+import { Picture } from 'astro:assets';
+import Base from '@/layouts/Base.astro';
+import { getExhibitions, exhibitionPath, gridPath, paintingPath, priceFrom, usd, altText, widthsFor, exhibitionDescription } from '@/lib/exhibition';
+
+export function getStaticPaths() {
+  return getExhibitions().map((exhibition) => ({ params: { route: exhibition.route }, props: { exhibition } }));
+}
+
+const { exhibition } = Astro.props;
+---
+
+<Base title={`${exhibition.title}, all works | NoHands`} description={exhibitionDescription(exhibition)} canonical={gridPath(exhibition)}>
+  <section class="grid-page">
+    <header class="grid-head">
+      <h1 class="title">{exhibition.title}</h1>
+      <a class="chip" href={exhibitionPath(exhibition)}>Walk the gallery</a>
+    </header>
+    <ol class="grid">
+      {exhibition.works.map((work) => (
+        <li class="tile">
+          <a href={paintingPath(work)} class="tile-link">
+            <div class="tile-art" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
+              <Picture
+                src={work.image}
+                widths={widthsFor(work.image, [320, 480, 720, 960], 960)}
+                sizes="(min-width: 900px) 30vw, 46vw"
+                formats={['avif', 'webp']}
+                fallbackFormat="jpg"
+                quality={82}
+                alt={altText(work)}
+                loading={work.index < 4 ? 'eager' : 'lazy'}
+                decoding="async"
+              />
+            </div>
+            <h2 class="tile-title">{work.title}</h2>
+            <p class="tile-meta">{work.medium}</p>
+            <p class="tile-meta">
+              {work.status === 'sold' ? <span class="sold">Original sold</span> : <span>Original {usd(work.originalPrice)}</span>}
+              <span class="sep" aria-hidden="true">·</span>
+              <span>Prints from {usd(priceFrom(work))}</span>
+            </p>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+</Base>
+
+<style>
+  .grid-page {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: calc(var(--header-h) + 1.5rem) clamp(1rem, 3vw, 2rem) 4rem;
+  }
+  .grid-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .title {
+    font-size: 1.35rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3rem 2rem;
+    }
+  }
+  .tile-link {
+    display: grid;
+    gap: 0.3rem;
+    justify-items: center;
+    text-align: center;
+  }
+  .tile-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 0.6rem;
+  }
+  .tile-art :global(picture) {
+    display: contents;
+  }
+  /* The image fills the square on its long side and keeps its ratio; never cropped. */
+  .tile-art :global(img) {
+    width: min(100%, calc(100% * var(--ratio)));
+    height: auto;
+    box-shadow: 0 0 0 2px #c2a96a, 0 14px 24px -12px rgba(20, 20, 19, 0.4);
+    transition: transform 300ms var(--ease), box-shadow 300ms var(--ease);
+  }
+  .tile-link:hover :global(img) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 2px #c2a96a, 0 20px 30px -12px rgba(20, 20, 19, 0.45);
+  }
+  .tile-title {
+    font-size: 0.95rem;
+  }
+  .tile-meta {
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+  }
+  .sold {
+    color: var(--accent);
+  }
+  .sep {
+    margin: 0 0.35rem;
+    color: var(--mute);
+  }
+</style>

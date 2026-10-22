@@ -1,13 +1,15 @@
 ---
 /**
- * Direct, indexable page for one painting: the framed painting with its facts, then the
- * purchase section, then a way into the walk at this painting.
+ * Direct, indexable page for one work. Static HTML with the image, verified medium, dimensions,
+ * availability and purchase options, independent of the gallery animation. Structured data and
+ * the share image come from the same record.
  */
+import { getImage } from 'astro:assets';
 import Base from '@/layouts/Base.astro';
 import FramedPainting from '@/components/FramedPainting.astro';
 import PaintingDetails from '@/components/PaintingDetails.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
-import { getExhibitions, inches, siteTagline, paintingPageTitle, paintingPath, walkPathAt, usd, priceFrom } from '@/lib/exhibition';
+import { getExhibitions, paintingPageTitle, paintingDescription, paintingPath, walkPathAt, exhibitionPath, workJsonLd, altText } from '@/lib/exhibition';
 
 export function getStaticPaths() {
   return getExhibitions().flatMap((exhibition) =>
@@ -16,19 +18,26 @@ export function getStaticPaths() {
 }
 
 const { work, exhibition } = Astro.props;
-const availability =
-  work.status === 'sold'
-    ? `Original sold. Fine art reproductions from ${usd(priceFrom(work))}.`
-    : `Original ${usd(work.originalPrice)}, fine art reproductions from ${usd(priceFrom(work))}.`;
-const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}. ${availability} Part of ${exhibition.title} at ${siteTagline}.`;
+const site = Astro.site ?? new URL(Astro.url.origin);
+const description = paintingDescription(work, exhibition);
+const share = await getImage({ src: work.image, width: 1200, format: 'jpg', quality: 84 });
+const full = await getImage({ src: work.image, width: Math.min(work.image.width, 2400), format: 'jpg', quality: 86 });
+const imageUrl = new URL(full.src, site).toString();
+const image = {
+  url: new URL(share.src, site).toString(),
+  width: share.attributes.width as number,
+  height: share.attributes.height as number,
+  alt: altText(work),
+};
 ---
 
-<Base title={paintingPageTitle(work)} description={description} canonical={paintingPath(work)}>
+<Base title={paintingPageTitle(work)} description={description} canonical={paintingPath(work)} image={image} jsonLd={workJsonLd(work, exhibition, site, imageUrl)}>
   <section class="painting">
     <div class="frame-wrap" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
       <FramedPainting work={work} eager sizes="(min-width: 900px) 40vw, 84vw" />
     </div>
     <div class="facts details--left">
+      <p class="eyebrow"><a href={exhibitionPath(exhibition)}>{exhibition.title}</a> · {work.index + 1} of {exhibition.works.length}</p>
       <h1 class="title">{work.title}</h1>
       <PaintingDetails work={work} action="link" href="#buy" />
     </div>
@@ -36,9 +45,20 @@ const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}
   <section class="buy-section" id="buy">
     <WorkDetail work={work} exhibition={exhibition} mode="page" />
     <p class="enter">
-      <a class="pill" href={walkPathAt(exhibition, work)}>Enter the exhibition at this painting</a>
+      <a class="pill" href={walkPathAt(exhibition, work)}>Enter the exhibition at this work</a>
     </p>
   </section>
+
+  <script>
+    // Deep link from the facts block: #buy?choose=print preselects the print option.
+    const m = location.hash.match(/choose=(original|print)/);
+    const form = document.querySelector<HTMLElement>('form[data-purchase]');
+    if (m && form) form.dataset.choose = m[1];
+    window.addEventListener('hashchange', () => {
+      const h = location.hash.match(/choose=(original|print)/);
+      if (h && form) form.dataset.choose = h[1];
+    });
+  </script>
 </Base>
 
 <style>
@@ -49,9 +69,13 @@ const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}
     min-height: 100svh;
     padding: calc(var(--header-h) + 1rem) 1.25rem 3rem;
   }
+  .eyebrow a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
   .title {
     font-size: 1.05rem;
-    margin-bottom: 0.75rem;
+    margin: 0.3rem 0 0.9rem;
     text-align: center;
   }
   .frame-wrap {
@@ -60,7 +84,7 @@ const description = `${work.title}, ${work.medium}, ${inches(work.originalSize)}
   }
   .facts {
     display: grid;
-    gap: 0.5rem;
+    gap: 0.25rem;
     justify-items: center;
   }
   @media (min-width: 900px) {

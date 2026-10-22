@@ -1,5 +1,5 @@
 ---
-import { siteName, artistName, getCurrentExhibition, exhibitionPath } from '@/lib/exhibition';
+import { siteName, artistName, getCurrentExhibition, exhibitionPath, gridPath } from '@/lib/exhibition';
 
 const exhibition = getCurrentExhibition();
 const home = exhibitionPath(exhibition);
@@ -8,7 +8,12 @@ const home = exhibitionPath(exhibition);
 <header class="site-header">
   <a class="wordmark chip" href={home} aria-label={`${siteName} home`}>{siteName}<span class="by">by {artistName}</span></a>
   <!-- Reserved: exhibition switcher renders here once more than one exhibition exists. -->
-  <span class="chip">{exhibition.title}</span>
+  <nav class="right" aria-label="Exhibition">
+    <a class="chip" href={home}>{exhibition.title}</a>
+    <a class="chip chip--icon" href={gridPath(exhibition)} aria-label="All works as a grid">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" fill="currentColor"/></svg>
+    </a>
+  </nav>
 </header>
 
 <style>
@@ -35,14 +40,22 @@ const home = exhibitionPath(exhibition);
     color: var(--ink);
     gap: 0.4rem;
   }
+  .right {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .chip--icon {
+    padding: 0.4rem 0.7rem;
+  }
   .by {
     font-family: var(--font-text);
     font-weight: 400;
     font-size: 0.72rem;
     color: var(--mute);
   }
-  @media (max-width: 480px) {
-    .by {
+  @media (max-width: 599px) {
+    .by,
+    .right .chip:not(.chip--icon) {
       display: none;
     }
   }

@@ -3,6 +3,7 @@ import '@fontsource-variable/comfortaa';
 import '@fontsource-variable/inter';
 import '@/styles/global.css';
 import Header from '@/components/Header.astro';
+import Seo from '@/components/Seo.astro';
 import { siteTagline } from '@/lib/exhibition';
 
 interface Props {
@@ -11,9 +12,11 @@ interface Props {
   /** Path for the canonical URL, e.g. /paintings/rhino. Defaults to the current path. */
   canonical?: string;
   bodyClass?: string;
+  image?: { url: string; width: number; height: number; alt: string };
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { title, description, canonical, bodyClass } = Astro.props;
+const { title, description, canonical, bodyClass, image, jsonLd } = Astro.props;
 const canonicalUrl = new URL(canonical ?? Astro.url.pathname, Astro.site ?? Astro.url).toString();
 ---
 
@@ -22,9 +25,7 @@ const canonicalUrl = new URL(canonical ?? Astro.url.pathname, Astro.site ?? Astr
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>{title}</title>
-    {description && <meta name="description" content={description} />}
-    <link rel="canonical" href={canonicalUrl} />
+    <Seo title={title} description={description} canonical={canonicalUrl} image={image} jsonLd={jsonLd} />
     <meta name="theme-color" content="#eceae5" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="generator" content={Astro.generator} />

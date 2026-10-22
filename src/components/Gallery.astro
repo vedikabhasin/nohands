@@ -10,7 +10,7 @@
  */
 import FramedPainting from '@/components/FramedPainting.astro';
 import PaintingDetails from '@/components/PaintingDetails.astro';
-import type { Exhibition } from '@/lib/exhibition';
+import { paintingPath, type Exhibition } from '@/lib/exhibition';
 
 interface Props {
   exhibition: Exhibition;
@@ -42,7 +42,10 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
       <div class="plane floor" data-bay="end"></div>
       <div class="plane ceiling ceiling--plain" data-bay="end"></div>
       <div class="plane end-wall"></div>
-      <!-- Paintings: each its own plane, a hair in front of its wall. -->
+      <!-- A soft pool of light on the wall behind each painting, then the painting itself. -->
+      {stops.map(({ work, side }) => (
+        <div class:list={['plane', 'pool', side < 0 ? 'hung-l' : 'hung-r']} data-pool={work.id} data-side={side}></div>
+      ))}
       {stops.map(({ work, side }) => (
         <div
           class:list={['plane', 'hung', side < 0 ? 'hung-l' : 'hung-r']}
@@ -58,15 +61,27 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     </div>
 
     <div class="overlays">
+      <p class="intro-hint chip" data-intro-hint>
+        {stops.length} works · scroll to walk
+      </p>
       {stops.map(({ work }) => (
         <div class="panel" data-panel={work.id} style="--h: 0;">
           <h2 class="title title--mobile">{work.title}</h2>
           <div class="panel-details" data-details>
             <h2 class="title title--desktop" aria-hidden="true">{work.title}</h2>
-            <PaintingDetails work={work} action="dialog" />
+            <PaintingDetails work={work} action="dialog" compact />
+            <a class="page-link" href={paintingPath(work)}>View this work's page</a>
           </div>
         </div>
       ))}
+      <nav class="walk-nav" aria-label="Move between works" data-walk-nav hidden>
+        <button class="icon-btn" type="button" data-step="-1" aria-label="Previous work">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn" type="button" data-step="1" aria-label="Next work">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </nav>
     </div>
   </div>
 
@@ -74,7 +89,7 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
   <ol class="static-list" aria-label="Paintings">
     {stops.map(({ work }) => (
       <li class="static-item" id={`stop-${work.id}`}>
-        <h2 class="title">{work.title}</h2>
+        <h2 class="title"><a href={paintingPath(work)}>{work.title}</a></h2>
         <div class="static-frame" style={`--ratio: ${work.image.width} / ${work.image.height};`}>
           <FramedPainting work={work} sizes="(min-width: 900px) 40vw, 84vw" />
         </div>
@@ -126,9 +141,16 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
   .wall {
     width: calc(var(--len) / var(--ps, 1));
     height: calc(var(--ch) * 2 / var(--ps, 1));
+    /* soft ivory with a gentle fall-off toward the floor; no pure white */
     background:
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 38%, rgba(20, 20, 19, 0.05)),
-      var(--surface);
+      linear-gradient(to bottom, rgba(255, 253, 247, 0.5), rgba(255, 253, 247, 0) 35%, rgba(20, 20, 19, 0.05)),
+      var(--wall);
+  }
+  .pool {
+    width: calc(var(--pw) * 2.4);
+    height: calc(var(--pw) * 2.4);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 252, 244, 0.85), rgba(255, 252, 244, 0.35) 45%, rgba(255, 252, 244, 0) 100%);
   }
   .wall-l {
     transform: translate3d(-50%, -50%, 0) translate3d(calc(-1 * var(--cw)), 0, var(--zc)) rotateY(90deg) scale(var(--ps, 1));
@@ -151,24 +173,22 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     transform: translate3d(-50%, -50%, 0) translate3d(0, var(--ch), var(--zc)) rotateX(90deg) scale(var(--ps, 1));
     background:
       linear-gradient(to right, rgba(20, 20, 19, 0.05), rgba(20, 20, 19, 0) 12%, rgba(20, 20, 19, 0) 88%, rgba(20, 20, 19, 0.05)),
-      var(--ground-deep);
+      var(--floor);
   }
   .ceiling {
     width: calc(var(--cw) * 2 / var(--ps, 1));
     height: calc(var(--len) / var(--ps, 1));
     transform: translate3d(-50%, -50%, 0) translate3d(0, calc(-1 * var(--ch)), var(--zc)) rotateX(-90deg) scale(var(--ps, 1));
-    background:
-      radial-gradient(38% 16% at 50% 50%, #fffdf4 0%, #fff6dc 45%, rgba(255, 246, 220, 0) 100%),
-      #f4f2ee;
+    background: var(--ceiling);
   }
   .ceiling--plain {
-    background: #f4f2ee;
+    background: var(--ceiling);
   }
   .end-wall {
     width: calc(var(--cw) * 2 / var(--ps, 1));
     height: calc(var(--ch) * 2 / var(--ps, 1));
     transform: translate3d(-50%, -50%, 0) translate3d(0, 0, var(--zend)) scale(var(--ps, 1));
-    background: radial-gradient(60% 50% at 50% 30%, #ffffff, var(--surface) 70%);
+    background: radial-gradient(60% 50% at 50% 30%, rgba(255, 253, 247, 0.9), var(--wall) 70%);
   }
 
   /* 2D overlays: one panel per painting, shown while the camera holds on it. */
@@ -183,6 +203,42 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     inset: 0;
     opacity: var(--h);
     pointer-events: none;
+  }
+  .intro-hint {
+    position: absolute;
+    left: 50%;
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    margin: 0;
+    white-space: nowrap;
+    opacity: var(--hint, 1);
+    transition: opacity 400ms var(--ease);
+  }
+  .walk-nav {
+    position: absolute;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 0.5rem;
+    pointer-events: auto;
+    opacity: var(--nav, 0);
+    transition: opacity 300ms var(--ease);
+  }
+  .walk-nav[hidden] {
+    display: none;
+  }
+  @media (max-width: 899px) {
+    /* On the phone the controls sit centred under the facts, in space the layout reserves. */
+    .walk-nav {
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+    .walk-nav .icon-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
   }
   .panel.is-view .panel-details {
     pointer-events: auto;
@@ -239,6 +295,20 @@ const stops = exhibition.works.map((work, i) => ({ work, side: i % 2 === 0 ? -1 
     }
   }
 
+  .page-link {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.74rem;
+    color: var(--mute);
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  @media (min-width: 900px) {
+    .page-link {
+      text-align: left;
+    }
+  }
   .static-list {
     display: none;
     margin: 0;

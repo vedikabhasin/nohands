@@ -1,25 +1,54 @@
 ---
 /**
  * The gallery walk. Every painting's purchase sheet is pre-rendered in a <dialog> so buying
- * never leaves the page or loses the visitor's place.
+ * never leaves the page or loses the visitor's place. The paintings are also real links in the
+ * document (the reduced-motion list), so crawlers reach every work from here.
  */
+import { getImage } from 'astro:assets';
 import Base from '@/layouts/Base.astro';
 import Gallery from '@/components/Gallery.astro';
 import WorkDetail from '@/components/WorkDetail.astro';
-import { getExhibitions, siteTagline, exhibitionPath, usd, priceFrom } from '@/lib/exhibition';
+import { getExhibitions, exhibitionPath, gridPath, paintingPath, exhibitionDescription, exhibitionJsonLd, altText } from '@/lib/exhibition';
 
 export function getStaticPaths() {
   return getExhibitions().map((exhibition) => ({ params: { route: exhibition.route }, props: { exhibition } }));
 }
 
 const { exhibition } = Astro.props;
-const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.length} original paintings on paper, walked one at a time. Originals and fine art reproductions from ${usd(Math.min(...exhibition.works.map(priceFrom)))}.`;
+const site = Astro.site ?? new URL(Astro.url.origin);
+const description = exhibitionDescription(exhibition);
+const opening = exhibition.works[0];
+const share = await getImage({ src: opening.image, width: 1200, format: 'jpg', quality: 82 });
+const image = {
+  url: new URL(share.src, site).toString(),
+  width: share.attributes.width as number,
+  height: share.attributes.height as number,
+  alt: altText(opening),
+};
 ---
 
-<Base title={`${exhibition.title} | ${siteTagline}`} description={description} canonical={exhibitionPath(exhibition)} bodyClass="is-walk">
+<Base
+  title={exhibition.seoTitle}
+  description={description}
+  canonical={exhibitionPath(exhibition)}
+  bodyClass="is-walk"
+  image={image}
+  jsonLd={exhibitionJsonLd(exhibition, site)}
+>
   <h1 class="visually-hidden">{exhibition.title}</h1>
 
   <Gallery exhibition={exhibition} />
+
+  <!-- Crawlable index of the works, after the walk. -->
+  <nav class="works-index" aria-label="Works in this exhibition">
+    <h2 class="eyebrow">Works in this exhibition</h2>
+    <ol>
+      {exhibition.works.map((work) => (
+        <li><a href={paintingPath(work)}>{work.title}</a> <span class="muted">{work.medium}</span></li>
+      ))}
+    </ol>
+    <p><a href={gridPath(exhibition)}>See all works as a grid</a></p>
+  </nav>
 
   <p class="indicator chip" aria-live="polite" data-indicator hidden>
     <span data-stop-current>1</span>&nbsp;/&nbsp;{exhibition.works.length}
@@ -27,7 +56,7 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
 
   {
     exhibition.works.map((work) => (
-      <dialog class="sheet" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={`${work.title}: source the original or order a reproduction`}>
+      <dialog class="sheet" id={`dialog-${work.id}`} data-dialog={work.id} aria-label={`${work.title}: purchase the original or a print`}>
         <WorkDetail work={work} exhibition={exhibition} mode="panel" />
       </dialog>
     ))
@@ -40,6 +69,25 @@ const description = `${exhibition.title} at ${siteTagline}: ${exhibition.works.l
 </Base>
 
 <style>
+  .works-index {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  .works-index ol {
+    margin: 0.75rem 0 1rem;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .works-index a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .works-index .muted {
+    font-size: 0.8rem;
+  }
   .indicator[hidden] {
     display: none;
   }

@@ -31,6 +31,8 @@ export function initWalk() {
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const indicator = document.querySelector<HTMLElement>('[data-stop-current]');
   const indicatorWrap = document.querySelector<HTMLElement>('[data-indicator]');
+  const hint = walk.querySelector<HTMLElement>('[data-intro-hint]');
+  const nav = walk.querySelector<HTMLElement>('[data-walk-nav]');
   const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) * 16 || 72;
 
   const stops: Stop[] = Array.from(walk.querySelectorAll<HTMLElement>('[data-hung]'))
@@ -151,7 +153,8 @@ export function initWalk() {
       }
       if (G.mobile) {
         // Mobile: title under the header; hanger, frame and facts form one group centred below it.
-        const avail = G.vh - headerH - titleH - 24;
+        const navReserve = 56; // room for the previous/next controls under the facts
+        const avail = G.vh - headerH - titleH - 24 - navReserve;
         const fit = (w: number) => {
           const hanger = Math.min(0.16 * w, 88);
           return hanger + w / s.ratio + 2 * frameBand(w) + 26 + detailsH;
@@ -201,6 +204,11 @@ export function initWalk() {
       }
       s.el.style.setProperty('--pw', `${pw}px`);
       s.el.style.setProperty('--zp', `${G.z(s.index)}px`);
+      const pool = walk.querySelector<HTMLElement>(`[data-pool="${CSS.escape(s.id)}"]`);
+      if (pool) {
+        pool.style.setProperty('--pw', `${pw}px`);
+        pool.style.setProperty('--zp', `${G.z(s.index)}px`);
+      }
     }
   }
 
@@ -287,6 +295,11 @@ export function initWalk() {
       if (!s.panel) continue;
       s.panel.style.setProperty('--h', h.toFixed(3));
       s.panel.classList.toggle('is-view', h > 0.5);
+    }
+    hint?.style.setProperty('--hint', String(scrolled < G.introSpan * 0.4 ? 1 : 0));
+    if (nav) {
+      nav.hidden = active < 0;
+      nav.style.setProperty('--nav', hold > 0.5 ? '1' : '0');
     }
     setCurrent(active);
   }
@@ -392,10 +405,12 @@ export function initWalk() {
     setTimeout(done, 320); // safety if the animation does not fire
   }
 
-  function open(id: string, source: 'walk' | 'direct' | 'nav', trigger?: HTMLElement) {
+  function open(id: string, source: 'walk' | 'direct' | 'nav', trigger?: HTMLElement, choose?: string) {
     const dialog = dialogFor(id);
     if (!dialog) return;
     if (trigger) lastTrigger = trigger;
+    const form = dialog.querySelector<HTMLElement>('form[data-purchase]');
+    if (form && choose) form.dataset.choose = choose;
     const openDialog = document.querySelector<HTMLDialogElement>('dialog[open]');
     const show = () => {
       dialog.showModal();
@@ -414,10 +429,21 @@ export function initWalk() {
     }
   }
 
+  function step(delta: number) {
+    const i = Math.max(0, Math.min(n - 1, (current < 0 ? -1 : current) + delta));
+    scrollToStop(order[i], reduced ? ('instant' as ScrollBehavior) : 'smooth');
+  }
+
   walk.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-open]');
+    const target = e.target as HTMLElement;
+    const stepBtn = target.closest<HTMLElement>('[data-step]');
+    if (stepBtn) {
+      step(Number(stepBtn.dataset.step));
+      return;
+    }
+    const btn = target.closest<HTMLElement>('[data-open]');
     if (!btn) return;
-    open(btn.dataset.open!, 'walk', btn);
+    open(btn.dataset.open!, 'walk', btn, btn.dataset.choose);
   });
 
   document.querySelectorAll<HTMLDialogElement>('dialog[data-dialog]').forEach((dialog) => {
@@ -447,11 +473,18 @@ export function initWalk() {
   });
 
   document.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const t = e.target as HTMLElement;
+    if (t.closest('input, textarea, select')) return;
+    const delta = e.key === 'ArrowRight' ? 1 : -1;
     const openDialog = document.querySelector<HTMLDialogElement>('dialog[open]');
-    if (!openDialog) return;
-    const i = order.indexOf(openDialog.dataset.dialog!);
-    if (e.key === 'ArrowRight' && order[i + 1]) open(order[i + 1], 'nav');
-    if (e.key === 'ArrowLeft' && order[i - 1]) open(order[i - 1], 'nav');
+    if (openDialog) {
+      const i = order.indexOf(openDialog.dataset.dialog!);
+      if (order[i + delta]) open(order[i + delta], 'nav');
+      return;
+    }
+    e.preventDefault();
+    step(delta);
   });
 
   // --- Boot ---------------------------------------------------------------------------------

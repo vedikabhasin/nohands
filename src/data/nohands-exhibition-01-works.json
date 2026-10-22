@@ -6,7 +6,7 @@
     "title": "Exhibition 001",
     "status": "current",
     "slug": null,
-    "slug_note": "Provisional. Once Vedi names the exhibition, set slug (e.g. \"first-light\") and the walk route becomes /exhibitions/001-first-light.",
+    "slug_note": "Provisional. Once Vedi names the exhibition, set slug (e.g. \"first-light\") and the walk route becomes /exhibition/001-first-light.",
     "scope_note": "MVP contains only these 10 works. No photography, no digital art, no other paintings. Square (nomohands.com) is reference only and will be retired; never read from or write to it at runtime.",
     "opening_wall": "water-droplets",
     "walk_order": [
@@ -84,7 +84,7 @@
       }
     ],
     "seo": {
-      "title": null,
+      "title": "Exhibition 001 — Original Paintings by Vedi | NoHands",
       "description": null
     }
   },
@@ -154,7 +154,9 @@
         "print_medium": null,
         "print_large": null
       },
-      "one_of_a_kind_badge": "gold"
+      "one_of_a_kind_badge": "gold",
+      "seo_title": "Water Droplets — Original Painting and Fine Art Prints | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "a-still-life",
@@ -205,7 +207,9 @@
         "print_small": null,
         "print_medium": null,
         "print_large": null
-      }
+      },
+      "seo_title": "A Still Life — Pastel Painting on Brown Paper | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "reflection",
@@ -257,7 +261,9 @@
         "print_medium": null,
         "print_large": null
       },
-      "one_of_a_kind_badge": "gold"
+      "one_of_a_kind_badge": "gold",
+      "seo_title": "Reflection — Colored Pencil and Acrylic Painting | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "bam",
@@ -310,7 +316,9 @@
         "print_small": null,
         "print_medium": null,
         "print_large": null
-      }
+      },
+      "seo_title": "BAM! — Original Acrylic Painting and Fine Art Prints | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "pop",
@@ -367,7 +375,9 @@
         "print_small": null,
         "print_medium": null,
         "print_large": null
-      }
+      },
+      "seo_title": "POP! — Sold Original, Fine Art Prints Available | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "wham",
@@ -422,7 +432,9 @@
         "print_small": null,
         "print_medium": null,
         "print_large": null
-      }
+      },
+      "seo_title": "WHAM! — Original Acrylic Painting and Fine Art Prints | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "slash",
@@ -477,7 +489,9 @@
         "print_small": null,
         "print_medium": null,
         "print_large": null
-      }
+      },
+      "seo_title": "SLASH! — Original Acrylic Painting and Fine Art Prints | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "color-me-mine",
@@ -530,7 +544,9 @@
         "print_medium": null,
         "print_large": null
       },
-      "one_of_a_kind_badge": "gold"
+      "one_of_a_kind_badge": "gold",
+      "seo_title": "Color Me Mine — Original Painting and Fine Art Prints | NoHands",
+      "medium_kind": "painting"
     },
     {
       "id": "greek-god",
@@ -581,7 +597,9 @@
         "print_small": null,
         "print_medium": null,
         "print_large": null
-      }
+      },
+      "seo_title": "Greek God — Charcoal Drawing and Fine Art Prints | NoHands",
+      "medium_kind": "drawing"
     },
     {
       "id": "rhino",
@@ -633,8 +651,11 @@
         "print_medium": null,
         "print_large": null
       },
-      "one_of_a_kind_badge": "gold"
+      "one_of_a_kind_badge": "gold",
+      "seo_title": "Rhino — Original Pencil and Acrylic Painting | NoHands",
+      "medium_kind": "painting"
     }
   ],
-  "badge_note": "one_of_a_kind_badge: 'gold' fills the one-of-a-kind star with the gilt finish. Absent means an outline star."
+  "badge_note": "one_of_a_kind_badge: 'gold' fills the one-of-a-kind star with the gilt finish. Absent means an outline star.",
+  "seo_note": "seo_title per work and exhibition.seo.title are the <title> values. Provisional starting points; Vedi edits them here. medium_kind is the verified noun for the work (painting or drawing) used in copy and structured data."
 }

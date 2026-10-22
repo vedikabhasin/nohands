@@ -43,6 +43,10 @@ export interface Work {
   resolutionFlag: string | null;
   /** 'gold' fills the one-of-a-kind star with the gilt finish. */
   badge: 'gold' | null;
+  /** Verified noun for the work, used in copy and structured data. */
+  kind: 'painting' | 'drawing';
+  /** The page <title>, from the JSON. */
+  seoTitle: string;
   /** The artwork image (never a room mockup). */
   image: ImageMetadata;
   imageFile: string;
@@ -72,6 +76,7 @@ export interface Exhibition {
   /** URL segment: `001` until a slug is set, then `001-{slug}`. */
   route: string;
   title: string;
+  seoTitle: string;
   status: 'current' | 'archived' | 'upcoming';
   walkOrder: string[];
   works: Work[];
@@ -133,6 +138,8 @@ function buildWork(raw: RawWork, index: number, wall: number): Work {
     series: 'series' in raw ? ((raw as { series?: string }).series ?? null) : null,
     resolutionFlag: 'resolution_flag' in raw ? ((raw as { resolution_flag?: string }).resolution_flag ?? null) : null,
     badge: (raw as { one_of_a_kind_badge?: string }).one_of_a_kind_badge === 'gold' ? 'gold' : null,
+    kind: (raw as { medium_kind?: string }).medium_kind === 'drawing' ? 'drawing' : 'painting',
+    seoTitle: (raw as { seo_title?: string }).seo_title ?? `${raw.title} | ${data.site} by ${data.artist}`,
     image,
     imageFile: file,
     index,
@@ -177,6 +184,7 @@ function build(): Exhibition {
     id: ex.id,
     route: slug ? `${ex.id}-${slug}` : ex.id,
     title: ex.title,
+    seoTitle: (ex.seo as { title?: string | null }).title ?? `${ex.title} | ${data.site} by ${data.artist}`,
     status: ex.status as Exhibition['status'],
     walkOrder: [...ex.walk_order],
     works,
@@ -220,7 +228,7 @@ export function neighbours(exhibition: Exhibition, work: Work): { prev: Work | n
 
 /** Public URLs. Route names are chosen for search, not gallery jargon. */
 export function exhibitionPath(exhibition: Exhibition): string {
-  return `/exhibitions/${exhibition.route}`;
+  return `/exhibition/${exhibition.route}`;
 }
 export function gridPath(exhibition: Exhibition): string {
   return `${exhibitionPath(exhibition)}/grid`;
@@ -234,14 +242,94 @@ export function walkPathAt(exhibition: Exhibition, work: Work): string {
 
 export const siteTagline = `${siteName} by ${artistName}`;
 
+/**
+ * Structured data for one work: VisualArtwork plus a Product with one Offer per purchasable
+ * variant (the original when available, each available print size). Prices and availability
+ * come from the same record that renders the page.
+ */
+export function workJsonLd(work: Work, exhibition: Exhibition, site: URL, imageUrl: string): Record<string, unknown>[] {
+  const url = new URL(paintingPath(work), site).toString();
+  const artist = { '@type': 'Person', name: artistName };
+  const offers: Record<string, unknown>[] = [];
+  const offer = (name: string, price: number, available: boolean, link: string | null) => ({
+    '@type': 'Offer',
+    name,
+    price,
+    priceCurrency: currency,
+    availability: available ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+    itemCondition: 'https://schema.org/NewCondition',
+    url: link ?? url,
+  });
+  offers.push(offer(`Original ${work.kind}`, work.status === 'sold' ? (work.soldAt ?? work.originalPrice) : work.originalPrice, work.status === 'available', work.stripeOriginal));
+  for (const p of work.prints) {
+    offers.push(offer(`Fine art print, ${p.label}, ${inches(p.size)}`, p.price, p.available, p.stripe));
+  }
+  const artwork = {
+    '@context': 'https://schema.org',
+    '@type': 'VisualArtwork',
+    '@id': `${url}#artwork`,
+    name: work.title,
+    url,
+    image: imageUrl,
+    creator: artist,
+    artform: work.kind === 'drawing' ? 'Drawing' : 'Painting',
+    artMedium: work.medium,
+    artworkSurface: 'Paper',
+    width: { '@type': 'Distance', name: `${work.originalSize.width} in` },
+    height: { '@type': 'Distance', name: `${work.originalSize.height} in` },
+    isPartOf: { '@type': 'ExhibitionEvent', name: exhibition.title, url: new URL(exhibitionPath(exhibition), site).toString() },
+  };
+  const product = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${url}#product`,
+    name: work.title,
+    url,
+    image: imageUrl,
+    description: `${work.title} by ${artistName}, ${work.medium}, ${inches(work.originalSize)}.`,
+    brand: { '@type': 'Brand', name: siteName },
+    isRelatedTo: { '@id': `${url}#artwork` },
+    offers,
+  };
+  return [artwork, product];
+}
+
+export function exhibitionJsonLd(exhibition: Exhibition, site: URL): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ExhibitionEvent',
+    name: exhibition.title,
+    url: new URL(exhibitionPath(exhibition), site).toString(),
+    organizer: { '@type': 'Person', name: artistName },
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    workFeatured: exhibition.works.map((w) => ({ '@type': 'VisualArtwork', name: w.title, url: new URL(paintingPath(w), site).toString() })),
+  };
+}
+
 /** Medium without its "on paper" support, for the page title pattern "original {medium} painting on paper". */
 export function mediumForTitle(work: Work): string {
   return work.medium.replace(/\s+on\s+[a-z ]*paper$/i, '').toLowerCase();
 }
 
-/** `{Title}, original {medium} painting on paper | NoHands by Vedi` */
+/** Page <title> for a painting: the JSON's seo_title. */
 export function paintingPageTitle(work: Work): string {
-  return `${work.title}, original ${mediumForTitle(work)} painting on paper | ${siteTagline}`;
+  return work.seoTitle;
+}
+
+/** One factual sentence for meta descriptions and social previews. No invented copy. */
+export function paintingDescription(work: Work, exhibition: Exhibition): string {
+  const from = printFrom(work);
+  const original =
+    work.status === 'sold'
+      ? `The original ${work.kind} has sold`
+      : `Original ${work.kind} ${usd(work.originalPrice)}`;
+  const prints = from !== null ? `, fine art reproductions from ${usd(from)}` : '';
+  return `${work.title} by ${artistName}: ${work.medium}, ${inches(work.originalSize)}. ${original}${prints}. Part of ${exhibition.title} at ${siteName}.`;
+}
+
+export function exhibitionDescription(exhibition: Exhibition): string {
+  const from = Math.min(...exhibition.works.map(priceFrom));
+  return `${exhibition.title} at ${siteName}: ${exhibition.works.length} original works on paper by ${artistName}, walked one at a time. Originals and fine art reproductions from ${usd(from)}.`;
 }
 
 /** Lowest purchasable price for a work (prints, or the original when cheaper and available). */
